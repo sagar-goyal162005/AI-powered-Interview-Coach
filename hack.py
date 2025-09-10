@@ -736,6 +736,30 @@ class VideoChatBot:
             'posture_status': self.user_context['posture_feedback']
         }
 
+def safe_get_analysis_data(report, field_path, default_value=0):
+    """Safely extract analysis data from reports, handling both interview and video chat reports."""
+    if "analysis" in report:
+        # Traditional interview practice report
+        try:
+            value = report
+            for key in field_path.split('.'):
+                value = value[key]
+            return value
+        except (KeyError, TypeError):
+            return default_value
+    elif "session_type" in report and report["session_type"] == "video_chat":
+        # Video chat report - provide reasonable defaults
+        defaults = {
+            'analysis.confidence.confidence_score': 7.5,
+            'analysis.tone.score': 0.5,
+            'analysis.word_choice.filler_word_count': 0,
+            'analysis.word_choice.professional_word_count': 1,
+            'analysis.posture.status': 'Not analyzed'
+        }
+        return defaults.get(field_path, default_value)
+    else:
+        return default_value
+
 def create_login_page():
     st.subheader("Login")
     username = st.text_input("Username", key="login_username")
@@ -818,8 +842,8 @@ def create_progress_report_pdf(username, reports, start_date=None, end_date=None
     else:
         # Add summary information
         num_sessions = len(filtered_reports)
-        avg_confidence = sum(r["analysis"]["confidence"]["confidence_score"] for r in filtered_reports) / num_sessions if num_sessions > 0 else 0
-        avg_sentiment = sum(r["analysis"]["tone"]["score"] for r in filtered_reports) / num_sessions if num_sessions > 0 else 0
+        avg_confidence = sum(safe_get_analysis_data(r, 'analysis.confidence.confidence_score', 5.0) for r in filtered_reports) / num_sessions if num_sessions > 0 else 0
+        avg_sentiment = sum(safe_get_analysis_data(r, 'analysis.tone.score', 0.0) for r in filtered_reports) / num_sessions if num_sessions > 0 else 0
         
         elements.append(Paragraph(f"Sessions Analyzed: {num_sessions}", styles['Normal']))
         elements.append(Paragraph(f"Average Confidence Score: {avg_confidence:.1f}/10", styles['Normal']))
@@ -837,11 +861,11 @@ def create_progress_report_pdf(username, reports, start_date=None, end_date=None
         
         for report in filtered_reports:
             date = report["date"]
-            question = report["question"][:30] + "..." if len(report["question"]) > 30 else report["question"]
-            confidence = f"{report['analysis']['confidence']['confidence_score']:.1f}"
-            tone = f"{report['analysis']['tone']['score']:.2f}"
-            prof_words = str(report['analysis']['word_choice']['professional_word_count'])
-            filler_words = str(report['analysis']['word_choice']['filler_word_count'])
+            question = report.get("question", "Video Chat Session")[:30] + "..." if len(report.get("question", "Video Chat Session")) > 30 else report.get("question", "Video Chat Session")
+            confidence = f"{safe_get_analysis_data(report, 'analysis.confidence.confidence_score', 5.0):.1f}"
+            tone = f"{safe_get_analysis_data(report, 'analysis.tone.score', 0.0):.2f}"
+            prof_words = str(safe_get_analysis_data(report, 'analysis.word_choice.professional_word_count', 0))
+            filler_words = str(safe_get_analysis_data(report, 'analysis.word_choice.filler_word_count', 0))
             
             table_data.append([date, question, confidence, tone, prof_words, filler_words])
         
@@ -867,11 +891,11 @@ def create_progress_report_pdf(username, reports, start_date=None, end_date=None
         # Count occurrence of each improvement area
         improvement_areas = {}
         for report in filtered_reports:
-            tone_score = report["analysis"]["tone"]["score"]
-            filler_count = report["analysis"]["word_choice"]["filler_word_count"]
-            prof_word_count = report["analysis"]["word_choice"]["professional_word_count"]
-            confidence_score = report["analysis"]["confidence"]["confidence_score"]
-            posture = report["analysis"].get("posture", {}).get("status", "Not analyzed")
+            tone_score = safe_get_analysis_data(report, 'analysis.tone.score', 0.0)
+            filler_count = safe_get_analysis_data(report, 'analysis.word_choice.filler_word_count', 0)
+            prof_word_count = safe_get_analysis_data(report, 'analysis.word_choice.professional_word_count', 0)
+            confidence_score = safe_get_analysis_data(report, 'analysis.confidence.confidence_score', 5.0)
+            posture = safe_get_analysis_data(report, 'analysis.posture.status', 'Not analyzed')
             
             if tone_score < 0:
                 improvement_areas["Positive language"] = improvement_areas.get("Positive language", 0) + 1
@@ -1288,10 +1312,12 @@ def dashboard_page(username):
             
             for report in reports:
                 dates.append(report["timestamp"])
-                confidence_scores.append(report["analysis"]["confidence"]["confidence_score"])
-                tone_scores.append(report["analysis"]["tone"]["score"])
-                filler_counts.append(report["analysis"]["word_choice"]["filler_word_count"])
-                professional_counts.append(report["analysis"]["word_choice"]["professional_word_count"])
+                
+                # Use safe extraction for all analysis data
+                confidence_scores.append(safe_get_analysis_data(report, 'analysis.confidence.confidence_score', 5.0))
+                tone_scores.append(safe_get_analysis_data(report, 'analysis.tone.score', 0.0))
+                filler_counts.append(safe_get_analysis_data(report, 'analysis.word_choice.filler_word_count', 0))
+                professional_counts.append(safe_get_analysis_data(report, 'analysis.word_choice.professional_word_count', 0))
             
             # Convert to pandas for easier charting
             df = pd.DataFrame({
@@ -1397,21 +1423,52 @@ def dashboard_page(username):
                 
                 # Show individual reports
                 for i, report in enumerate(filtered_reports):
-                    with st.expander(f"Report {i+1}: {report['timestamp']} - {report['question'][:30]}..."):
-                        st.markdown(f"**Question:** {report['question']}")
-                        st.markdown(f"**Your Answer:** {report['answer']}")
-                        
-                        # Display analysis summary
-                        st.markdown("### Analysis Summary")
-                        col1, col2, col3 = st.columns(3)
-                        col1.metric("Confidence Score", f"{report['analysis']['confidence']['confidence_score']:.1f}/10")
-                        col2.metric("Tone Score", f"{report['analysis']['tone']['score']:.2f}")
-                        col3.metric("Filler Words", f"{report['analysis']['word_choice']['filler_word_count']}")
-                        
-                        # Display full feedback
-                        st.markdown("### Detailed Feedback")
-                        feedback = interview_coach.provide_comprehensive_feedback(report['analysis'])
-                        st.text(feedback)
+                    # Handle different report types for display
+                    if "session_type" in report and report["session_type"] == "video_chat":
+                        # Video chat report
+                        title = f"Video Chat {i+1}: {report['timestamp']}"
+                        with st.expander(title):
+                            st.markdown(f"**Session Type:** Video Chat Session")
+                            if "user_input" in report:
+                                st.markdown(f"**Your Message:** {report['user_input']}")
+                            if "ai_response" in report:
+                                st.markdown(f"**AI Response:** {report['ai_response']}")
+                            
+                            # Display video analysis if available
+                            if "video_analysis" in report and report["video_analysis"]:
+                                st.markdown("### Video Analysis")
+                                video_analysis = report["video_analysis"]
+                                col1, col2 = st.columns(2)
+                                col1.metric("Posture Status", video_analysis.get('posture_status', 'Unknown'))
+                                col2.metric("Head Position", video_analysis.get('head_position', 'Unknown'))
+                            
+                            # Display conversation summary if available
+                            if "conversation_summary" in report:
+                                st.markdown("### Session Summary")
+                                summary = report["conversation_summary"]
+                                col1, col2, col3 = st.columns(3)
+                                col1.metric("Messages", summary.get('total_messages', 0))
+                                col2.metric("Duration (min)", summary.get('session_duration_minutes', 0))
+                                col3.metric("Mood", summary.get('current_mood', 'neutral'))
+                    else:
+                        # Traditional interview report
+                        title = f"Report {i+1}: {report['timestamp']} - {report.get('question', 'Unknown')[:30]}..."
+                        with st.expander(title):
+                            st.markdown(f"**Question:** {report.get('question', 'N/A')}")
+                            st.markdown(f"**Your Answer:** {report.get('answer', 'N/A')}")
+                            
+                            # Display analysis summary
+                            st.markdown("### Analysis Summary")
+                            col1, col2, col3 = st.columns(3)
+                            col1.metric("Confidence Score", f"{safe_get_analysis_data(report, 'analysis.confidence.confidence_score', 5.0):.1f}/10")
+                            col2.metric("Tone Score", f"{safe_get_analysis_data(report, 'analysis.tone.score', 0.0):.2f}")
+                            col3.metric("Filler Words", f"{safe_get_analysis_data(report, 'analysis.word_choice.filler_word_count', 0)}")
+                            
+                            # Display full feedback if analysis exists
+                            if "analysis" in report:
+                                st.markdown("### Detailed Feedback")
+                                feedback = interview_coach.provide_comprehensive_feedback(report['analysis'])
+                                st.text(feedback)
     
     # Account Tab
     with tabs[4]:

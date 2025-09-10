@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Application specific
+users.json
+reports/
+*.wav
+*.mp3
+
+# Streamlit
+.streamlit/
+
+# Temporary files
+/tmp/
+*.tmp
+*.temp
