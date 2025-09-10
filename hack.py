@@ -1,11 +1,8 @@
 import streamlit as st
-import speech_recognition as sr
 import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
 from nltk.corpus import stopwords
 import numpy as np
-import sounddevice as sd
-import wavio
 import re
 import threading
 import queue
@@ -19,6 +16,26 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import io
 from datetime import datetime
+import random
+
+# Optional audio imports - will work without them for video chat
+try:
+    import speech_recognition as sr
+    AUDIO_AVAILABLE = True
+except ImportError:
+    AUDIO_AVAILABLE = False
+    sr = None
+    print("Audio recognition not available - video chat will work without audio features")
+
+try:
+    import sounddevice as sd
+    import wavio
+    AUDIO_RECORDING_AVAILABLE = True
+except (ImportError, OSError) as e:
+    AUDIO_RECORDING_AVAILABLE = False
+    sd = None
+    wavio = None
+    print(f"Audio recording not available: {e} - using video-only features")
 
 # Ensure necessary NLTK resources are downloaded
 nltk.download('punkt', quiet=True)
@@ -257,10 +274,24 @@ class VideoTransformer(VideoTransformerBase):
                    (10, 60), font, 0.6, color, 2)
         
         return img
+    
+    def get_current_analysis(self):
+        """Get current video analysis data for the chatbot."""
+        return {
+            'posture_status': self.posture_status,
+            'head_position': self.head_position,
+            'shoulder_slope': self.shoulder_slope,
+            'posture_feedback': self.posture_feedback,
+            'slouch_counter': self.slouch_counter,
+            'recent_posture_history': self.posture_history[-5:] if self.posture_history else []
+        }
 
 class InterviewCoach:
     def __init__(self):
-        self.recognizer = sr.Recognizer()
+        if AUDIO_AVAILABLE:
+            self.recognizer = sr.Recognizer()
+        else:
+            self.recognizer = None
         self.sentiment_analyzer = SentimentIntensityAnalyzer()
         self.stopwords = set(stopwords.words('english'))
 
@@ -284,6 +315,10 @@ class InterviewCoach:
 
     def record_voice(self, filename="interview_response.wav"):
         """Record audio"""
+        if not AUDIO_RECORDING_AVAILABLE:
+            print("Audio recording not available in this environment")
+            return None
+            
         self.recording_in_progress = True
         self.stop_recording = False
         
@@ -336,6 +371,10 @@ class InterviewCoach:
 
     def transcribe_audio(self, audio_file):
         print("Transcribing audio...")
+        if not AUDIO_AVAILABLE or self.recognizer is None:
+            print("Audio transcription not available in this environment")
+            return ""
+            
         if audio_file is None:
             return ""
             
@@ -551,6 +590,152 @@ class InterviewCoach:
 
         return analysis_results
 
+class VideoChatBot:
+    def __init__(self):
+        """Initialize the Video AI Chatbot with conversation capabilities."""
+        self.conversation_history = []
+        self.user_context = {
+            'name': None,
+            'current_topic': None,
+            'mood': 'neutral',
+            'posture_feedback': 'good',
+            'session_start': time.time()
+        }
+        
+        # Predefined responses for different scenarios
+        self.responses = {
+            'greeting': [
+                "Hello! I'm your AI interview coach. I can see you through the camera and help you practice. How are you feeling today?",
+                "Hi there! Ready for some interview practice? I'll be watching your posture and giving you feedback as we chat.",
+                "Welcome! I can see you're here to practice. Let's start with how you're feeling about interviews today."
+            ],
+            'posture_good': [
+                "Great posture! You look confident and ready.",
+                "Excellent! Your posture shows confidence - keep it up!",
+                "Perfect posture! You're projecting confidence beautifully."
+            ],
+            'posture_poor': [
+                "I notice you might want to adjust your posture. Sit up straight to project more confidence!",
+                "Try sitting up a bit straighter. Good posture shows confidence in interviews.",
+                "Let's work on that posture - straighten those shoulders and lift your chin!"
+            ],
+            'confidence_building': [
+                "Remember, confidence comes from preparation. You're already taking the right steps!",
+                "I can see you're working hard. That preparation will show in your interviews.",
+                "Every expert was once a beginner. You're building valuable skills right now!"
+            ],
+            'interview_tips': [
+                "Pro tip: Make eye contact with the camera as if it's the interviewer's eyes.",
+                "Remember the STAR method: Situation, Task, Action, Result when answering behavioral questions.",
+                "Take a moment to think before answering - it shows thoughtfulness, not hesitation."
+            ],
+            'encouragement': [
+                "You're doing great! I can see your confidence building.",
+                "Keep up the excellent work! Your preparation is really showing.",
+                "I'm impressed with your progress. You're getting better with each practice!"
+            ]
+        }
+        
+        # Keywords for topic detection
+        self.keywords = {
+            'nervous': ['nervous', 'anxious', 'worried', 'scared', 'afraid'],
+            'confident': ['confident', 'ready', 'prepared', 'good', 'excited'],
+            'interview': ['interview', 'job', 'position', 'hiring', 'employer'],
+            'practice': ['practice', 'rehearse', 'prepare', 'train', 'improve'],
+            'feedback': ['feedback', 'advice', 'help', 'tips', 'suggestions']
+        }
+
+    def analyze_user_input(self, user_input, video_analysis=None):
+        """Analyze user input and determine appropriate response."""
+        if not user_input:
+            return self._get_random_response('encouragement')
+        
+        user_input_lower = user_input.lower()
+        
+        # Update conversation history
+        self.conversation_history.append({
+            'user': user_input,
+            'timestamp': time.time(),
+            'video_analysis': video_analysis
+        })
+        
+        # Analyze keywords to determine topic
+        detected_topics = []
+        for topic, keywords in self.keywords.items():
+            if any(keyword in user_input_lower for keyword in keywords):
+                detected_topics.append(topic)
+        
+        # Update user context
+        if 'nervous' in detected_topics:
+            self.user_context['mood'] = 'nervous'
+        elif 'confident' in detected_topics:
+            self.user_context['mood'] = 'confident'
+        
+        if video_analysis:
+            self.user_context['posture_feedback'] = video_analysis.get('posture_status', 'unknown')
+        
+        return self._generate_response(user_input_lower, detected_topics, video_analysis)
+
+    def _generate_response(self, user_input, topics, video_analysis):
+        """Generate an appropriate response based on input and video analysis."""
+        response_parts = []
+        
+        # Check if this is a greeting
+        if any(greeting in user_input for greeting in ['hello', 'hi', 'hey', 'start']):
+            if not self.conversation_history or len(self.conversation_history) <= 1:
+                return self._get_random_response('greeting')
+        
+        # Respond to posture analysis if available
+        if video_analysis and 'posture_status' in video_analysis:
+            posture_status = video_analysis['posture_status'].lower()
+            if 'good' in posture_status or 'straight' in posture_status:
+                response_parts.append(self._get_random_response('posture_good'))
+            elif 'poor' in posture_status or 'slouch' in posture_status:
+                response_parts.append(self._get_random_response('posture_poor'))
+        
+        # Respond based on detected topics
+        if 'nervous' in topics:
+            response_parts.append("I understand you're feeling nervous. That's completely normal! ")
+            response_parts.append(self._get_random_response('confidence_building'))
+        elif 'feedback' in topics:
+            response_parts.append(self._get_random_response('interview_tips'))
+        elif 'practice' in topics or 'interview' in topics:
+            response_parts.append("Great! Practice is key to success. ")
+            response_parts.append(self._get_random_response('interview_tips'))
+        
+        # If no specific response generated, provide encouragement
+        if not response_parts:
+            response_parts.append(self._get_random_response('encouragement'))
+            response_parts.append(" " + self._get_random_response('interview_tips'))
+        
+        # Add video-specific feedback
+        if video_analysis:
+            if 'facial_feedback' in video_analysis:
+                response_parts.append(f" {video_analysis['facial_feedback']}")
+        
+        return " ".join(response_parts)
+
+    def _get_random_response(self, category):
+        """Get a random response from a category."""
+        if category in self.responses:
+            return random.choice(self.responses[category])
+        return "I'm here to help you improve your interview skills!"
+
+    def get_conversation_summary(self):
+        """Get a summary of the current conversation."""
+        if not self.conversation_history:
+            return "No conversation yet. Start chatting!"
+        
+        total_messages = len(self.conversation_history)
+        session_duration = time.time() - self.user_context['session_start']
+        
+        return {
+            'total_messages': total_messages,
+            'session_duration_minutes': round(session_duration / 60, 1),
+            'current_mood': self.user_context['mood'],
+            'posture_status': self.user_context['posture_feedback']
+        }
+
 def create_login_page():
     st.subheader("Login")
     username = st.text_input("Username", key="login_username")
@@ -740,7 +925,7 @@ def dashboard_page(username):
     reports = get_user_reports(username)
     
     # Dashboard tabs
-    tabs = st.tabs(["Practice Interview", "Progress Tracker", "Reports", "Account"])
+    tabs = st.tabs(["Practice Interview", "Video Chat", "Progress Tracker", "Reports", "Account"])
     
     # Practice Interview Tab
     with tabs[0]:
@@ -970,8 +1155,125 @@ def dashboard_page(username):
                         else:
                             st.warning("Please enter your response before submitting.")
     
-    # Progress Tracker Tab
+    # Video Chat Tab
     with tabs[1]:
+        st.header("🎯 Video AI Chatbot")
+        
+        # Initialize chatbot in session state
+        if 'chatbot' not in st.session_state:
+            st.session_state.chatbot = VideoChatBot()
+        
+        if 'chat_messages' not in st.session_state:
+            st.session_state.chat_messages = []
+        
+        chatbot = st.session_state.chatbot
+        
+        st.write("Welcome to your Video AI Interview Coach! I can see you through the camera and provide real-time feedback during our conversation.")
+        
+        # Create columns for video and chat
+        col1, col2 = st.columns([1, 1])
+        
+        with col1:
+            st.subheader("📹 Video Analysis")
+            
+            # Initialize video transformer
+            video_transformer = VideoTransformer()
+            
+            # Add WebRTC streamer component
+            webrtc_ctx = webrtc_streamer(
+                key="video-chat",
+                video_transformer_factory=lambda: video_transformer,
+                rtc_configuration=RTC_CONFIGURATION,
+                media_stream_constraints={"video": True, "audio": False},
+            )
+            
+            # Display real-time video analysis
+            if webrtc_ctx.video_transformer:
+                analysis_placeholder = st.empty()
+                if webrtc_ctx.state.playing:
+                    video_analysis = video_transformer.get_current_analysis()
+                    analysis_placeholder.markdown(f"""
+                    **Current Analysis:**
+                    - Posture: {video_analysis['posture_status']}
+                    - Head Position: {video_analysis['head_position']}
+                    - Feedback: {video_analysis['posture_feedback']}
+                    """)
+        
+        with col2:
+            st.subheader("💬 Chat with AI Coach")
+            
+            # Display chat history
+            chat_container = st.container()
+            with chat_container:
+                for message in st.session_state.chat_messages:
+                    if message['role'] == 'user':
+                        st.markdown(f"**You:** {message['content']}")
+                    else:
+                        st.markdown(f"**AI Coach:** {message['content']}")
+            
+            # Chat input
+            user_input = st.text_input("Type your message here...", key="chat_input")
+            
+            col_send, col_clear = st.columns([1, 1])
+            
+            with col_send:
+                if st.button("Send Message", key="send_chat"):
+                    if user_input.strip():
+                        # Add user message to chat
+                        st.session_state.chat_messages.append({
+                            'role': 'user',
+                            'content': user_input,
+                            'timestamp': time.time()
+                        })
+                        
+                        # Get video analysis if available
+                        video_analysis = None
+                        if webrtc_ctx.video_transformer:
+                            video_analysis = video_transformer.get_current_analysis()
+                        
+                        # Generate AI response
+                        ai_response = chatbot.analyze_user_input(user_input, video_analysis)
+                        
+                        # Add AI response to chat
+                        st.session_state.chat_messages.append({
+                            'role': 'assistant',
+                            'content': ai_response,
+                            'timestamp': time.time()
+                        })
+                        
+                        # Save chat session as a report
+                        report_data = {
+                            "session_type": "video_chat",
+                            "user_input": user_input,
+                            "ai_response": ai_response,
+                            "video_analysis": video_analysis,
+                            "conversation_summary": chatbot.get_conversation_summary()
+                        }
+                        
+                        save_interview_report(username, report_data)
+                        
+                        # Clear input and rerun to show new messages
+                        st.rerun()
+            
+            with col_clear:
+                if st.button("Clear Chat", key="clear_chat"):
+                    st.session_state.chat_messages = []
+                    st.session_state.chatbot = VideoChatBot()
+                    st.rerun()
+        
+        # Session summary
+        if st.session_state.chat_messages:
+            st.subheader("📊 Session Summary")
+            summary = chatbot.get_conversation_summary()
+            
+            col1, col2, col3, col4 = st.columns(4)
+            col1.metric("Messages", summary['total_messages'])
+            col2.metric("Duration (min)", summary['session_duration_minutes'])
+            col3.metric("Current Mood", summary['current_mood'])
+            col4.metric("Posture Status", summary['posture_status'])
+
+    # Progress Tracker Tab
+    with tabs[2]:
         st.header("Your Interview Progress")
         
         if not reports:
@@ -1054,7 +1356,7 @@ def dashboard_page(username):
                 col2.metric("Avg Professional Words", f"{avg_professional:.1f}")
     
     # Reports Tab
-    with tabs[2]:
+    with tabs[3]:
         st.header("Your Interview Reports")
         
         if not reports:
@@ -1112,7 +1414,7 @@ def dashboard_page(username):
                         st.text(feedback)
     
     # Account Tab
-    with tabs[3]:
+    with tabs[4]:
         st.header("Account Settings")
         
         st.subheader("User Information")
