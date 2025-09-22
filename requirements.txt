@@ -1,9 +1,9 @@
 streamlit
-speech-recognition
+speechrecognition
 nltk
 numpy
 sounddevice
-wavio
+wave
 opencv-python
 streamlit-webrtc
 pandas
