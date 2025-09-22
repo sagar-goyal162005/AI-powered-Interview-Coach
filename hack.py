@@ -1,7 +1,51 @@
-import streamlit as st
-import nltk
-from nltk.sentiment import SentimentIntensityAnalyzer
-from nltk.corpus import stopwords
+try:
+    import streamlit as st
+    STREAMLIT_AVAILABLE = True
+except ImportError:
+    STREAMLIT_AVAILABLE = False
+    # Create mock streamlit if not available
+    class MockStreamlit:
+        def __getattr__(self, name):
+            return lambda *args, **kwargs: None
+    st = MockStreamlit()
+    print("Streamlit not available - running in test mode")
+try:
+    import nltk
+    from nltk.sentiment import SentimentIntensityAnalyzer
+    from nltk.corpus import stopwords
+    NLTK_AVAILABLE = True
+    
+    # Ensure necessary NLTK resources are downloaded
+    try:
+        nltk.download('punkt', quiet=True)
+        nltk.download('stopwords', quiet=True)
+        nltk.download('vader_lexicon', quiet=True)
+    except:
+        print("Could not download NLTK data - some features may not work")
+        
+except ImportError:
+    NLTK_AVAILABLE = False
+    # Create mocks for NLTK when not available
+    class MockSentimentAnalyzer:
+        def polarity_scores(self, text):
+            return {'compound': 0.0, 'pos': 0.5, 'neu': 0.5, 'neg': 0.0}
+    
+    class MockStopwords:
+        def words(self, lang):
+            return set(['the', 'a', 'an', 'and', 'or', 'but'])
+    
+    class MockNltk:
+        def word_tokenize(self, text):
+            return text.split()
+        def sent_tokenize(self, text):
+            return [s.strip() for s in text.split('.') if s.strip()]
+        def download(self, *args, **kwargs):
+            pass
+    
+    SentimentIntensityAnalyzer = MockSentimentAnalyzer
+    stopwords = MockStopwords()
+    nltk = MockNltk()
+    print("NLTK not available - using basic text processing")
 import numpy as np
 import re
 import threading
@@ -10,10 +54,82 @@ import time
 import os
 import hashlib
 import json
-import cv2
-from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, RTCConfiguration
-import pandas as pd
-import matplotlib.pyplot as plt
+try:
+    import cv2
+    CV2_AVAILABLE = True
+except ImportError:
+    CV2_AVAILABLE = False
+    # Create mock cv2
+    class MockCV2:
+        FONT_HERSHEY_SIMPLEX = 0
+        COLOR_BGR2GRAY = 0
+        
+        class data:
+            haarcascades = ""
+            
+        def CascadeClassifier(self, path):
+            class MockCascade:
+                def detectMultiScale(self, *args, **kwargs):
+                    return []
+            return MockCascade()
+        
+        def cvtColor(self, img, code):
+            return img
+            
+        def rectangle(self, *args, **kwargs):
+            pass
+            
+        def line(self, *args, **kwargs):
+            pass
+            
+        def putText(self, *args, **kwargs):
+            pass
+            
+        def addWeighted(self, *args, **kwargs):
+            return args[0] if args else None
+    
+    cv2 = MockCV2()
+    print("OpenCV not available - video features will be limited")
+try:
+    from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, RTCConfiguration
+    WEBRTC_AVAILABLE = True
+except ImportError:
+    WEBRTC_AVAILABLE = False
+    # Define a dummy base class for when streamlit_webrtc is not available
+    class VideoTransformerBase:
+        pass
+    webrtc_streamer = None
+    RTCConfiguration = None
+    print("WebRTC not available - video features will be limited")
+try:
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    PANDAS_AVAILABLE = True
+    MATPLOTLIB_AVAILABLE = True
+except ImportError as e:
+    PANDAS_AVAILABLE = False
+    MATPLOTLIB_AVAILABLE = False
+    # Create mock objects
+    class MockPandas:
+        def DataFrame(self, data):
+            return data
+    class MockMatplotlib:
+        def subplots(self, *args, **kwargs):
+            class MockFig:
+                def __getattr__(self, name):
+                    return lambda *args, **kwargs: None
+            class MockAx:
+                def __getattr__(self, name):
+                    return lambda *args, **kwargs: None
+            return MockFig(), MockAx()
+        def xticks(self, *args, **kwargs):
+            pass
+        def tight_layout(self, *args, **kwargs):
+            pass
+    
+    pd = MockPandas()
+    plt = MockMatplotlib()
+    print(f"Pandas/Matplotlib not available: {e}")
 import io
 from datetime import datetime
 import random
@@ -37,15 +153,14 @@ except (ImportError, OSError) as e:
     wavio = None
     print(f"Audio recording not available: {e} - using video-only features")
 
-# Ensure necessary NLTK resources are downloaded
-nltk.download('punkt', quiet=True)
-nltk.download('stopwords', quiet=True)
-nltk.download('vader_lexicon', quiet=True)
 
 # Configuration for WebRTC
-RTC_CONFIGURATION = RTCConfiguration(
-    {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
-)
+if WEBRTC_AVAILABLE and RTCConfiguration:
+    RTC_CONFIGURATION = RTCConfiguration(
+        {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+    )
+else:
+    RTC_CONFIGURATION = None
 
 # Database setup (using JSON file for simplicity)
 USER_DB_FILE = "users.json"
@@ -475,7 +590,7 @@ class InterviewCoach:
         hesitation_patterns = [
             r'\bI think\b', r'\bmaybe\b', r'\bpossibly\b', r'\bperhaps\b',
             r'\bI guess\b', r'\bsort of\b', r'\bkind of\b', r'\bI hope\b',
-            r'\bI\'m not sure\b', r'\bI don\'t know\b'
+            r"\bI'm not sure\b", r"\bI don't know\b"
         ]
 
         hesitation_count = sum(len(re.findall(pattern, text.lower())) for pattern in hesitation_patterns)
@@ -814,11 +929,42 @@ def create_signup_page():
 
 def create_progress_report_pdf(username, reports, start_date=None, end_date=None):
     """Generate a PDF report of user progress"""
-    from reportlab.lib.pagesizes import letter
-    from reportlab.pdfgen import canvas
-    from reportlab.lib import colors
-    from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    try:
+        from reportlab.lib.pagesizes import letter
+        from reportlab.pdfgen import canvas
+        from reportlab.lib import colors
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from io import BytesIO
+    except ImportError:
+        # Return a simple text-based report if reportlab is not available
+        report_text = f"Interview Performance Report for {username}\n"
+        report_text += "=" * 50 + "\n\n"
+        
+        if start_date and end_date:
+            filtered_reports = [r for r in reports if start_date <= r["date"] <= end_date]
+        else:
+            filtered_reports = reports
+        
+        if filtered_reports:
+            num_sessions = len(filtered_reports)
+            avg_confidence = sum(safe_get_analysis_data(r, 'analysis.confidence.confidence_score', 5.0) for r in filtered_reports) / num_sessions if num_sessions > 0 else 0
+            avg_tone = sum(safe_get_analysis_data(r, 'analysis.tone.score', 0.0) for r in filtered_reports) / num_sessions if num_sessions > 0 else 0
+            
+            report_text += f"Sessions Analyzed: {num_sessions}\n"
+            report_text += f"Average Confidence Score: {avg_confidence:.1f}/10\n"
+            report_text += f"Average Tone Score: {avg_tone:.2f} (-1 to 1 scale)\n\n"
+            
+            for i, report in enumerate(filtered_reports, 1):
+                report_text += f"Session {i}: {report['timestamp']}\n"
+                if 'question' in report:
+                    report_text += f"  Question: {report['question']}\n"
+                    report_text += f"  Confidence: {safe_get_analysis_data(report, 'analysis.confidence.confidence_score', 5.0):.1f}/10\n"
+                    report_text += f"  Tone: {safe_get_analysis_data(report, 'analysis.tone.score', 0.0):.2f}\n\n"
+        
+        return report_text.encode('utf-8')
+    
+    # If reportlab is available, continue with PDF generation
     from io import BytesIO
     
     buffer = BytesIO()
@@ -1128,15 +1274,19 @@ def dashboard_page(username):
             video_transformer = VideoTransformer()
             
             # Add WebRTC streamer component
-            webrtc_ctx = webrtc_streamer(
-                key="interview-practice",
-                video_transformer_factory=lambda: video_transformer,
-                rtc_configuration=RTC_CONFIGURATION,
-                media_stream_constraints={"video": True, "audio": True},
-            )
+            if WEBRTC_AVAILABLE and webrtc_streamer:
+                webrtc_ctx = webrtc_streamer(
+                    key="interview-practice",
+                    video_transformer_factory=lambda: video_transformer,
+                    rtc_configuration=RTC_CONFIGURATION,
+                    media_stream_constraints={"video": True, "audio": True},
+                )
+            else:
+                st.warning("Video features not available - WebRTC not installed")
+                webrtc_ctx = None
             
             # Display question prominently
-            if webrtc_ctx.video_transformer:
+            if webrtc_ctx and webrtc_ctx.video_transformer:
                 st.markdown(f"### Question: {question}")
                 
                 # Display posture status and feedback in real-time
@@ -1204,15 +1354,19 @@ def dashboard_page(username):
             video_transformer = VideoTransformer()
             
             # Add WebRTC streamer component
-            webrtc_ctx = webrtc_streamer(
-                key="video-chat",
-                video_transformer_factory=lambda: video_transformer,
-                rtc_configuration=RTC_CONFIGURATION,
-                media_stream_constraints={"video": True, "audio": False},
-            )
+            if WEBRTC_AVAILABLE and webrtc_streamer:
+                webrtc_ctx = webrtc_streamer(
+                    key="video-chat",
+                    video_transformer_factory=lambda: video_transformer,
+                    rtc_configuration=RTC_CONFIGURATION,
+                    media_stream_constraints={"video": True, "audio": False},
+                )
+            else:
+                st.warning("Video features not available - WebRTC not installed")
+                webrtc_ctx = None
             
             # Display real-time video analysis
-            if webrtc_ctx.video_transformer:
+            if webrtc_ctx and webrtc_ctx.video_transformer:
                 analysis_placeholder = st.empty()
                 if webrtc_ctx.state.playing:
                     video_analysis = video_transformer.get_current_analysis()
@@ -1252,7 +1406,7 @@ def dashboard_page(username):
                         
                         # Get video analysis if available
                         video_analysis = None
-                        if webrtc_ctx.video_transformer:
+                        if webrtc_ctx and webrtc_ctx.video_transformer:
                             video_analysis = video_transformer.get_current_analysis()
                         
                         # Generate AI response
@@ -1523,4 +1677,7 @@ def main():
             create_signup_page()
 
 if __name__ == "__main__":
-    main()
+    if STREAMLIT_AVAILABLE:
+        main()
+    else:
+        print("This is a Streamlit application. Install streamlit and run with: streamlit run hack.py")
