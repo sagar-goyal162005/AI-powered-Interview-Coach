@@ -1,5 +1,5 @@
 streamlit
-speech-recognition
+SpeechRecognition
 nltk
 numpy
 sounddevice
@@ -8,3 +8,4 @@ opencv-python
 streamlit-webrtc
 pandas
 matplotlib
+reportlab

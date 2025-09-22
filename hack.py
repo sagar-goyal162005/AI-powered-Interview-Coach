@@ -38,9 +38,13 @@ except (ImportError, OSError) as e:
     print(f"Audio recording not available: {e} - using video-only features")
 
 # Ensure necessary NLTK resources are downloaded
-nltk.download('punkt', quiet=True)
-nltk.download('stopwords', quiet=True)
-nltk.download('vader_lexicon', quiet=True)
+try:
+    nltk.download('punkt', quiet=True)
+    nltk.download('stopwords', quiet=True)
+    nltk.download('vader_lexicon', quiet=True)
+except Exception as e:
+    print(f"Warning: Failed to download NLTK data: {e}")
+    print("Some features may not work correctly without NLTK data.")
 
 # Configuration for WebRTC
 RTC_CONFIGURATION = RTCConfiguration(
@@ -85,28 +89,40 @@ def validate_username(username):
 
 def user_exists(username):
     """Check if a user already exists"""
-    with open(USER_DB_FILE, "r") as f:
-        users = json.load(f)
-    return username in users
+    try:
+        with open(USER_DB_FILE, "r") as f:
+            users = json.load(f)
+        return username in users
+    except (FileNotFoundError, json.JSONDecodeError, PermissionError):
+        return False
 
 def add_user(username, password):
     """Add a new user to the database"""
-    with open(USER_DB_FILE, "r") as f:
-        users = json.load(f)
+    try:
+        with open(USER_DB_FILE, "r") as f:
+            users = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        users = {}
     
     users[username] = hash_password(password)
     
-    with open(USER_DB_FILE, "w") as f:
-        json.dump(users, f)
+    try:
+        with open(USER_DB_FILE, "w") as f:
+            json.dump(users, f)
+    except PermissionError as e:
+        raise Exception(f"Unable to save user data: {e}")
 
 def authenticate_user(username, password):
     """Authenticate a user"""
-    with open(USER_DB_FILE, "r") as f:
-        users = json.load(f)
-    
-    if username in users and users[username] == hash_password(password):
-        return True
-    return False
+    try:
+        with open(USER_DB_FILE, "r") as f:
+            users = json.load(f)
+        
+        if username in users and users[username] == hash_password(password):
+            return True
+        return False
+    except (FileNotFoundError, json.JSONDecodeError, PermissionError):
+        return False
 
 def get_user_reports_path(username):
     """Get the path to a user's reports file"""
@@ -117,10 +133,13 @@ def save_interview_report(username, report_data):
     reports_file = get_user_reports_path(username)
     
     # Load existing reports or create new list
-    if os.path.exists(reports_file):
-        with open(reports_file, "r") as f:
-            reports = json.load(f)
-    else:
+    try:
+        if os.path.exists(reports_file):
+            with open(reports_file, "r") as f:
+                reports = json.load(f)
+        else:
+            reports = []
+    except (json.JSONDecodeError, PermissionError):
         reports = []
     
     # Add timestamp to report data
@@ -131,19 +150,24 @@ def save_interview_report(username, report_data):
     reports.append(report_data)
     
     # Save updated reports
-    with open(reports_file, "w") as f:
-        json.dump(reports, f, indent=4)
-    
-    return True
+    try:
+        with open(reports_file, "w") as f:
+            json.dump(reports, f, indent=4)
+        return True
+    except PermissionError as e:
+        raise Exception(f"Unable to save report: {e}")
 
 def get_user_reports(username):
     """Get all reports for a user"""
     reports_file = get_user_reports_path(username)
     
-    if os.path.exists(reports_file):
-        with open(reports_file, "r") as f:
-            return json.load(f)
-    else:
+    try:
+        if os.path.exists(reports_file):
+            with open(reports_file, "r") as f:
+                return json.load(f)
+        else:
+            return []
+    except (json.JSONDecodeError, PermissionError):
         return []
 
 # Enhanced Video frame transformer for webcam with posture analysis
@@ -292,8 +316,18 @@ class InterviewCoach:
             self.recognizer = sr.Recognizer()
         else:
             self.recognizer = None
-        self.sentiment_analyzer = SentimentIntensityAnalyzer()
-        self.stopwords = set(stopwords.words('english'))
+        
+        try:
+            self.sentiment_analyzer = SentimentIntensityAnalyzer()
+        except Exception as e:
+            print(f"Warning: Failed to initialize sentiment analyzer: {e}")
+            self.sentiment_analyzer = None
+            
+        try:
+            self.stopwords = set(stopwords.words('english'))
+        except Exception as e:
+            print(f"Warning: Failed to load stopwords: {e}")
+            self.stopwords = set()
 
         self.professional_words = {
             'accomplished', 'achieved', 'analyzed', 'coordinated', 'created',
@@ -397,6 +431,13 @@ class InterviewCoach:
                 'score': 0,
                 'sentiment': 'neutral',
                 'feedback': 'No speech detected to analyze tone.'
+            }
+
+        if self.sentiment_analyzer is None:
+            return {
+                'score': 0,
+                'sentiment': 'neutral',
+                'feedback': 'Sentiment analysis unavailable. Please ensure NLTK data is downloaded.'
             }
 
         sentiment_scores = self.sentiment_analyzer.polarity_scores(text)
@@ -807,19 +848,25 @@ def create_signup_page():
             st.error("Username already exists. Please choose another one.")
             return
             
-        add_user(username, password)
-        st.success("Account created successfully! Please log in.")
-        st.session_state.show_login = True
-        st.rerun()
+        try:
+            add_user(username, password)
+            st.success("Account created successfully! Please log in.")
+            st.session_state.show_login = True
+            st.rerun()
+        except Exception as e:
+            st.error(f"Failed to create account: {str(e)}")
 
 def create_progress_report_pdf(username, reports, start_date=None, end_date=None):
     """Generate a PDF report of user progress"""
-    from reportlab.lib.pagesizes import letter
-    from reportlab.pdfgen import canvas
-    from reportlab.lib import colors
-    from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-    from io import BytesIO
+    try:
+        from reportlab.lib.pagesizes import letter
+        from reportlab.pdfgen import canvas
+        from reportlab.lib import colors
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from io import BytesIO
+    except ImportError:
+        raise ImportError("reportlab is required for PDF generation. Please install it with: pip install reportlab")
     
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
@@ -1036,7 +1083,11 @@ def dashboard_page(username):
                                 "analysis": analysis_results
                             }
                             
-                            save_interview_report(username, report_data)
+                            try:
+                                save_interview_report(username, report_data)
+                                st.success("Analysis saved successfully!")
+                            except Exception as e:
+                                st.error(f"Failed to save analysis: {str(e)}")
                         else:
                             st.error("No speech detected. Please try again.")
                     else:
@@ -1093,7 +1144,11 @@ def dashboard_page(username):
                         "analysis": analysis_results
                     }
                     
-                    save_interview_report(username, report_data)
+                    try:
+                        save_interview_report(username, report_data)
+                        st.success("Analysis saved successfully!")
+                    except Exception as e:
+                        st.error(f"Failed to save analysis: {str(e)}")
                     
                     feedback = interview_coach.provide_comprehensive_feedback(analysis_results)
                     
@@ -1413,13 +1468,18 @@ def dashboard_page(username):
                 
                 # Generate PDF report button
                 if st.button("Generate PDF Report"):
-                    pdf_data = create_progress_report_pdf(username, filtered_reports, start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
-                    st.download_button(
-                        label="Download PDF Report",
-                        data=pdf_data,
-                        file_name=f"{username}_interview_report_{start_date}_to_{end_date}.pdf",
-                        mime="application/pdf"
-                    )
+                    try:
+                        pdf_data = create_progress_report_pdf(username, filtered_reports, start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
+                        st.download_button(
+                            label="Download PDF Report",
+                            data=pdf_data,
+                            file_name=f"{username}_interview_report_{start_date}_to_{end_date}.pdf",
+                            mime="application/pdf"
+                        )
+                    except ImportError as e:
+                        st.error(f"PDF generation failed: {str(e)}")
+                    except Exception as e:
+                        st.error(f"Error generating PDF report: {str(e)}")
                 
                 # Show individual reports
                 for i, report in enumerate(filtered_reports):
