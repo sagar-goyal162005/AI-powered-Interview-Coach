@@ -814,12 +814,15 @@ def create_signup_page():
 
 def create_progress_report_pdf(username, reports, start_date=None, end_date=None):
     """Generate a PDF report of user progress"""
-    from reportlab.lib.pagesizes import letter
-    from reportlab.pdfgen import canvas
-    from reportlab.lib import colors
-    from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-    from io import BytesIO
+    try:
+        from reportlab.lib.pagesizes import letter
+        from reportlab.pdfgen import canvas
+        from reportlab.lib import colors
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from io import BytesIO
+    except ImportError:
+        raise ImportError("reportlab is required for PDF generation. Please install it with: pip install reportlab")
     
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
@@ -1413,13 +1416,18 @@ def dashboard_page(username):
                 
                 # Generate PDF report button
                 if st.button("Generate PDF Report"):
-                    pdf_data = create_progress_report_pdf(username, filtered_reports, start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
-                    st.download_button(
-                        label="Download PDF Report",
-                        data=pdf_data,
-                        file_name=f"{username}_interview_report_{start_date}_to_{end_date}.pdf",
-                        mime="application/pdf"
-                    )
+                    try:
+                        pdf_data = create_progress_report_pdf(username, filtered_reports, start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
+                        st.download_button(
+                            label="Download PDF Report",
+                            data=pdf_data,
+                            file_name=f"{username}_interview_report_{start_date}_to_{end_date}.pdf",
+                            mime="application/pdf"
+                        )
+                    except ImportError as e:
+                        st.error(f"PDF generation failed: {str(e)}")
+                    except Exception as e:
+                        st.error(f"Error generating PDF report: {str(e)}")
                 
                 # Show individual reports
                 for i, report in enumerate(filtered_reports):
