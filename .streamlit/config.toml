@@ -3,10 +3,8 @@ email = ""
 
 [server]
 headless = true
-port = $PORT
 enableCORS = false
 enableXsrfProtection = true
 
 [browser]
 gatherUsageStats = false
-serverAddress = "0.0.0.0"
