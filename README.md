@@ -103,9 +103,18 @@ Generate realistic AI-powered mock interview videos with:
 
 ## 🚀 Deployment
 
-### Recommended: Streamlit Community Cloud (FREE)
+**✨ This repository is pre-configured for easy deployment on Render!**
 
-The easiest way to deploy this app:
+### One-Click Deploy to Render (Recommended)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/sagar-goyal162005/AI-powered-Interview-Coach)
+
+The repository includes `render.yaml` for automatic configuration. Just:
+1. Click the button above
+2. Add your `OPENAI_API_KEY` and `FREEPIK_API_KEY`
+3. Deploy!
+
+### Alternative: Streamlit Community Cloud (FREE)
 
 1. **Go to** [Streamlit Community Cloud](https://streamlit.io/cloud)
 2. **Sign in** with your GitHub account
@@ -119,6 +128,7 @@ The easiest way to deploy this app:
 ### Other Options
 
 For detailed deployment guides including:
+- Render (with render.yaml blueprint)
 - Heroku
 - Railway.app
 - AWS EC2

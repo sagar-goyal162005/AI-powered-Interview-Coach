@@ -2,11 +2,40 @@
 
 ## ✅ Recommended Deployment Options
 
-### Option 1: Render (Recommended - Easy & Reliable)
+### Option 1: Render (Recommended - Easy & Reliable) ⭐
 
 **Render offers free hosting with excellent Streamlit support!**
 
-#### Quick Deploy with Render:
+**🎉 This repository is now fully configured for one-click Render deployment!**
+
+#### Quick Deploy with Render (Automatic Configuration):
+
+This repository includes a `render.yaml` file for automatic deployment!
+
+1. **One-Click Deploy**
+   - Click: [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/sagar-goyal162005/AI-powered-Interview-Coach)
+   - Or visit: https://render.com and click "New +" → "Blueprint"
+   - Select this repository
+
+2. **Add Environment Variables**
+   - Render will prompt you for:
+     - `OPENAI_API_KEY`: Your OpenAI API key
+     - `FREEPIK_API_KEY`: Your Freepik API key
+   - Get your OpenAI key from: https://platform.openai.com/api-keys
+   - Get your Freepik key from: https://www.freepik.com/api
+
+3. **Deploy!**
+   - Click "Apply" or "Create Web Service"
+   - Render will automatically:
+     - Install system dependencies (ffmpeg, audio libraries)
+     - Install Python dependencies
+     - Configure the service with correct settings
+     - Deploy your app with SSL/HTTPS
+   - Your app will be live at: `https://ai-interview-coach.onrender.com`
+
+#### Manual Setup (Alternative):
+
+If you prefer manual configuration:
 
 1. **Push your code to GitHub** (Already done! ✅)
 
@@ -17,12 +46,11 @@
 3. **Create New Web Service**
    - Click "New +" → "Web Service"
    - Connect your GitHub repository: `sagar-goyal162005/AI-powered-Interview-Coach`
-   - Or use direct deployment: [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
 4. **Configure the Service**
    - **Name**: `ai-interview-coach` (or your preferred name)
    - **Environment**: `Python 3`
-   - **Build Command**: `pip install -r requirements.txt`
+   - **Build Command**: `chmod +x build.sh && ./build.sh`
    - **Start Command**: `streamlit run hack.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true`
    - **Instance Type**: Select `Free` or `Starter`
 
