@@ -2,7 +2,6 @@ streamlit
 speechrecognition
 nltk
 numpy
-sounddevice
 wavio
 opencv-python
 streamlit-webrtc

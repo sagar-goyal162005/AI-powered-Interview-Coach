@@ -4,7 +4,11 @@ import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
 from nltk.corpus import stopwords
 import numpy as np
-import sounddevice as sd
+try:
+    import sounddevice as sd  # Requires PortAudio; may not be available on hosted platforms
+    _SOUNDDEVICE_AVAILABLE = True
+except Exception:
+    _SOUNDDEVICE_AVAILABLE = False
 import wavio
 import re
 import threading
@@ -362,56 +366,40 @@ class InterviewCoach:
         self.stop_recording = False
 
     def record_voice(self, filename="interview_response.wav"):
-        """Record audio"""
+        """Record audio locally if sounddevice/PortAudio is available.
+        On hosted platforms (Render, Streamlit Cloud) this will gracefully disable recording.
+        """
+        if not _SOUNDDEVICE_AVAILABLE:
+            print("Sound recording unavailable (PortAudio not installed). Skipping microphone capture.")
+            return None
         self.recording_in_progress = True
         self.stop_recording = False
-        
         print(f"Recording your answer for {self.duration} seconds...")
         print("Speak now!")
-        
-        # Calculate total samples
         total_samples = int(self.duration * self.sample_rate)
-        
-        # Create array to store audio data
         recording = np.zeros((total_samples, 1))
-        
-        # Record in chunks to allow for stopping
-        chunk_size = int(0.1 * self.sample_rate)  # 0.1 second chunks
+        chunk_size = int(0.1 * self.sample_rate)
         recorded_samples = 0
-        
-        # Start recording
-        stream = sd.InputStream(samplerate=self.sample_rate, channels=1)
-        stream.start()
-        
-        while recorded_samples < total_samples and not self.stop_recording:
-            # Calculate remaining samples in this chunk
-            samples_to_record = min(chunk_size, total_samples - recorded_samples)
-            
-            # Record chunk
-            data, overflowed = stream.read(samples_to_record)
-            
-            # Store in our recording array
-            recording[recorded_samples:recorded_samples + len(data)] = data
-            
-            # Update position
-            recorded_samples += len(data)
-            
-        # Stop and close the stream
-        stream.stop()
-        stream.close()
-        
-        # If we have any recorded data and not just stopped immediately
-        if recorded_samples > self.sample_rate * 0.5:  # At least half a second
-            # Trim recording to actual length
+        try:
+            stream = sd.InputStream(samplerate=self.sample_rate, channels=1)
+            stream.start()
+            while recorded_samples < total_samples and not self.stop_recording:
+                samples_to_record = min(chunk_size, total_samples - recorded_samples)
+                data, overflowed = stream.read(samples_to_record)
+                recording[recorded_samples:recorded_samples + len(data)] = data
+                recorded_samples += len(data)
+            stream.stop()
+            stream.close()
+        except Exception as e:
+            print(f"Audio recording failed: {e}")
+            return None
+        if recorded_samples > self.sample_rate * 0.5:
             recording = recording[:recorded_samples]
-            
-            # Save recording
             wavio.write(filename, recording, self.sample_rate, sampwidth=2)
             print(f"Recording saved to {filename}")
             return filename
-        else:
-            print("Recording canceled or too short")
-            return None
+        print("Recording canceled or too short")
+        return None
 
     def transcribe_audio(self, audio_file):
         print("Transcribing audio...")
