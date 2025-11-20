@@ -101,6 +101,32 @@ Generate realistic AI-powered mock interview videos with:
    - Generate mock interview videos
    - Track your progress over time
 
+## 🚀 Deployment
+
+### Recommended: Streamlit Community Cloud (FREE)
+
+The easiest way to deploy this app:
+
+1. **Go to** [Streamlit Community Cloud](https://streamlit.io/cloud)
+2. **Sign in** with your GitHub account
+3. **Click** "New app" and select this repository
+4. **Set** main file path to `hack.py`
+5. **Add** environment variables in app settings:
+   - `OPENAI_API_KEY`
+   - `FREEPIK_API_KEY`
+6. **Deploy!** Your app will be live at `https://[your-app-name].streamlit.app`
+
+### Other Options
+
+For detailed deployment guides including:
+- Heroku
+- Railway.app
+- AWS EC2
+- Google Cloud Run
+- Docker deployment
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for complete instructions.
+
 ## 📁 Project Structure
 
 ```

@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: ai-interview-coach
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run hack.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: FREEPIK_API_KEY
+        sync: false
