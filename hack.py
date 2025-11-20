@@ -1,5 +1,11 @@
 import streamlit as st
-import speech_recognition as sr
+
+# Handle audio module imports with fallbacks
+try:
+    import speech_recognition as sr
+except ImportError:
+    sr = None
+    
 import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
 from nltk.corpus import stopwords
@@ -9,7 +15,12 @@ try:
     _SOUNDDEVICE_AVAILABLE = True
 except Exception:
     _SOUNDDEVICE_AVAILABLE = False
-import wavio
+
+try:
+    import wavio
+except ImportError:
+    wavio = None
+    
 import re
 import threading
 import queue
