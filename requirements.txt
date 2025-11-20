@@ -1,0 +1,17 @@
+streamlit
+speechrecognition
+nltk
+numpy
+sounddevice
+wavio
+opencv-python
+streamlit-webrtc
+pandas
+matplotlib
+reportlab
+moviepy
+gtts
+Pillow
+openai
+requests
+pydub
