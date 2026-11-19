@@ -40,7 +40,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://huggingface.co/spaces/Shauriya24/AI-Powered-Interview-Coach"
+Homepage = "https://huggingface.co/spaces/Sagar162005/software-interview-coach"
+"Live App" = "https://sagar162005-software-interview-coach.hf.space"
 Repository = "https://github.com/sagar-goyal162005/AI-powered-Interview-Coach"
 
 [project.scripts]
