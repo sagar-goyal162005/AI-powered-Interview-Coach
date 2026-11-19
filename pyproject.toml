@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-powered-interview-coach"
+version = "1.0.0"
+description = "OpenEnv-compliant reinforcement learning environment and Flask app for interview coaching"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+  { name = "AI Interview Coach" }
+]
+dependencies = [
+  "Flask",
+  "Werkzeug",
+  "openenv-core>=0.2.0",
+  "SpeechRecognition",
+  "nltk",
+  "numpy",
+  "joblib",
+  "opencv-python",
+  "pandas",
+  "matplotlib",
+  "requests",
+  "pdfplumber",
+  "python-docx",
+  "pyspellchecker",
+  "firebase-admin",
+  "Pillow",
+  "moviepy==1.0.3",
+  "pydub",
+  "python-dotenv",
+  "openai>=2.7.2",
+  "reportlab",
+  "pyttsx3",
+  "pydantic>=2.0.0",
+  "PyYAML>=6.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/ShauriyaDeveloper1/AI-Powered-Interview-Coach"
+
+[project.scripts]
+server = "server.app:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["rl_interview_coach*", "server*", "interview_coach_models*"]
+exclude = ["static*", "templates*", "reports*", "models*", "scripts*", "nltk_data*", "openenv_env*", "openenv_env/**"]
+
+[tool.setuptools.package-data]
+# Ensure bundled model artifacts ship in wheels/sdists.
+interview_coach_models = ["**/*"]

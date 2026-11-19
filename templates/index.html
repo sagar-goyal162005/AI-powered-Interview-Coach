@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+  <title>Interview Coach AI - Full Stack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Sans+3:wght@400;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="icon" type="image/png" href="/static/logo.png" />
+  <link rel="manifest" href="/static/manifest.json" />
+  <meta name="theme-color" content="#0b0f19" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="stylesheet" href="/static/styles.css?v=11" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <!-- Aceternity UI Background Gradient Animation -->
+  <div class="background-gradient-animation" aria-hidden="true">
+    <svg class="bg-gradient-svg" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="blurMe">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
+          <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -8" result="goo" />
+          <feBlend in="SourceGraphic" in2="goo" />
+        </filter>
+      </defs>
+    </svg>
+    <div class="gradients-container">
+      <div class="gradient-blob g1"></div>
+      <div class="gradient-blob g2"></div>
+      <div class="gradient-blob g3"></div>
+      <div class="gradient-blob g4"></div>
+      <div class="gradient-blob g5"></div>
+      <div class="gradient-blob interactive"></div>
+    </div>
+  </div>
+
+  <header class="app-header">
+    <img src="/static/logo.png" alt="AI Interview Coach Logo" class="brand-logo"
+      style="width: 72px; height: 72px; border-radius: 18px; margin: 0 auto 12px; display: block; box-shadow: 0 8px 24px rgba(0,0,0,0.3);" />
+    <div class="hero-pill-row">
+      <span class="hero-pill">AI Feedback</span>
+      <span class="hero-pill">Interview Simulation</span>
+      <span class="hero-pill">Progress Analytics</span>
+    </div>
+    <h1>Interview Coach AI</h1>
+    <p>Practice and improve your interview skills with intelligent, real-time coaching</p>
+  </header>
+
+  <main class="container">
+    <section id="authSection" class="card">
+      <div class="auth-switch">
+        <button id="showLoginBtn" class="switch-btn active" type="button">Login</button>
+        <button id="showSignupBtn" class="switch-btn" type="button">Sign Up</button>
+      </div>
+
+      <div id="loginPanel" class="auth-panel">
+        <div class="auth-panel-inner">
+          <h2>Welcome Back!</h2>
+          <p class="auth-subtext">Welcome back. Continue your interview prep journey.</p>
+          <input id="loginUsername" placeholder="Username" />
+          <div class="password-input-wrapper">
+            <input id="loginPassword" type="password" placeholder="Password" />
+            <button type="button" class="password-toggle" data-toggle-password="loginPassword"
+              aria-label="Toggle password visibility"></button>
+          </div>
+          <button id="loginBtn">Login</button>
+
+          <div id="firebaseEmailLinkBox" class="hidden">
+            <p class="auth-subtext">Or sign in with an email link.</p>
+            <div class="otp-row">
+              <input id="emailLinkEmail" placeholder="Email address" />
+              <button id="sendEmailLinkBtn" type="button" class="ghost">Send Link</button>
+            </div>
+            <button id="completeEmailLinkBtn" type="button" class="ghost">Complete sign-in</button>
+          </div>
+
+          <p class="auth-hint">Need an account? <button id="toSignupLink" type="button" class="inline-link">Sign
+              Up</button></p>
+        </div>
+      </div>
+
+      <div id="signupPanel" class="auth-panel hidden">
+        <div class="auth-panel-inner">
+          <h2>Sign Up</h2>
+          <p class="auth-subtext">Create your account and start practicing smarter.</p>
+          <input id="signupFullName" placeholder="Full name" />
+          <input id="signupEmail" placeholder="Email address" />
+          <input id="signupPhone" placeholder="Phone number" />
+          <input id="signupUniversity" placeholder="University / College" />
+          <input id="signupCollegeYear" placeholder="Current year of college (e.g., 2)" />
+          <input id="signupDegree" placeholder="Degree (e.g., B.Tech, BSc)" />
+          <input id="signupMajor" placeholder="Branch / Major" />
+          <input id="signupLinkedIn" placeholder="LinkedIn / Portfolio URL (optional)" />
+          <textarea id="signupAbout" rows="3" placeholder="About you (goals, interests, etc.)"></textarea>
+          <input id="signupUsername" placeholder="Username (min 8 chars)" />
+          <div class="password-input-wrapper">
+            <input id="signupPassword" type="password" placeholder="Password" />
+            <button type="button" class="password-toggle" data-toggle-password="signupPassword"
+              aria-label="Toggle password visibility"></button>
+          </div>
+          <div class="password-input-wrapper">
+            <input id="signupConfirmPassword" type="password" placeholder="Confirm Password" />
+            <button type="button" class="password-toggle" data-toggle-password="signupConfirmPassword"
+              aria-label="Toggle password visibility"></button>
+          </div>
+          <button id="signupBtn">Sign Up</button>
+          <p class="auth-hint">Already have an account? <button id="toLoginLink" type="button"
+              class="inline-link">Login</button></p>
+        </div>
+      </div>
+      <p id="authMessage" class="message"></p>
+    </section>
+
+    <section id="appSection" class="hidden">
+      <nav class="tabs" aria-label="Main Navigation">
+        <button class="tab active" data-tab="about"><span class="tab-icon">ℹ️</span><span>About</span></button>
+        <button class="tab" data-tab="practice"><span class="tab-icon">🎙️</span><span>Practice</span></button>
+        <button class="tab" data-tab="progress"><span class="tab-icon">📈</span><span>Progress</span></button>
+        <button class="tab" data-tab="ats"><span class="tab-icon">📄</span><span>ATS Checker</span></button>
+        <button class="tab" data-tab="reports"><span class="tab-icon">📊</span><span>Reports</span></button>
+        <button class="tab" data-tab="account"><span class="tab-icon">👤</span><span>Account</span></button>
+      </nav>
+
+      <!-- GAMIFICATION DASHBOARD -->
+      <div id="gamificationBar" class="gamification-bar"
+        style="display: flex; flex-direction: column; gap: 0.85rem; width: 100%; box-sizing: border-box;">
+        <div class="gami-stats" style="display: flex; justify-content: space-between; gap: 0.5rem; width: 100%;">
+          <div class="gami-stat gami-level" style="flex: 1; text-align: center; padding: 0.5rem 0.25rem;">Level <span
+              id="gamiLevel">1</span></div>
+          <div class="gami-stat gami-xp" style="flex: 1; text-align: center; padding: 0.5rem 0.25rem;">XP: <span
+              id="gamiXp">0</span></div>
+          <div class="gami-stat gami-streak" style="flex: 1; text-align: center; padding: 0.5rem 0.25rem;"><span
+              id="gamiStreak">0</span> 🔥 Streak</div>
+        </div>
+        <div class="gami-progress-container" style="width: 100%; display: flex; flex-direction: column; gap: 0.35rem;">
+          <div class="gami-progress-label"
+            style="display: flex; justify-content: space-between; font-size: 0.88rem; font-weight: 600; width: 100%;">
+            <span>Interview Readiness</span>
+            <span id="gamiProgressText">0%</span>
+          </div>
+          <div class="gami-progress-bar" style="width: 100%; height: 12px; border-radius: 999px; overflow: hidden;">
+            <div id="gamiProgressFill" class="gami-progress-fill"
+              style="width: 0%; height: 100%; border-radius: 999px;"></div>
+          </div>
+        </div>
+      </div>
+
+
+      <section id="about" class="tab-panel active card">
+        <p class="about-kicker">Interview Prep, Reimagined</p>
+        <h2 class="about-title">Level up your interview game with real-time AI coaching</h2>
+        <p class="about-lead">This platform helps you practice smarter with instant feedback, posture guidance,
+          performance trends, and mock interview simulations tailored to your role.</p>
+
+        <div class="about-strip">
+          <span class="about-chip">Text + Audio + Video Modes</span>
+          <span class="about-chip">Role-based Mock Interviews</span>
+          <span class="about-chip">Progress Analytics + PDF Reports</span>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><span id="totalSessions">0</span><small>Total Sessions</small></div>
+          <div class="stat"><span id="avgConfidence">0.0</span><small>Avg Confidence</small></div>
+          <div class="stat"><span id="userStatus">New</span><small>User Status</small></div>
+        </div>
+
+        <div class="about-grid">
+          <article class="about-card about-card-a">
+            <h3>Practice That Feels Real</h3>
+            <p>Choose a question, answer naturally, and get immediate analysis on confidence, tone, and vocabulary.</p>
+          </article>
+          <article class="about-card about-card-b">
+            <h3>Body Language Check</h3>
+            <p>Use video mode to track posture and presence so your delivery matches your content quality.</p>
+          </article>
+          <article class="about-card about-card-c">
+            <h3>Track Actual Growth</h3>
+            <p>See trends over time, identify weak spots, and export your progress report in one click.</p>
+          </article>
+        </div>
+
+        <div class="about-steps">
+          <div class="step-item">
+            <span class="step-dot">1</span>
+            <p>Pick a mode and answer a question.</p>
+          </div>
+          <div class="step-item">
+            <span class="step-dot">2</span>
+            <p>Review AI feedback and posture insights.</p>
+          </div>
+          <div class="step-item">
+            <span class="step-dot">3</span>
+            <p>Repeat, improve, and export your report.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="practice" class="tab-panel card">
+        <h2>Practice Interview</h2>
+        <p class="section-subtitle">Choose a practice mode and receive structured performance feedback.</p>
+        <label for="practiceMode">Choose Method</label>
+        <select id="practiceMode" title="Choose interview practice method">
+          <option>Record Audio Response</option>
+          <option>Text Input Response</option>
+          <option>Video Practice</option>
+        </select>
+
+        <!-- Problem C10: Software Engineering Interview Configuration -->
+        <div class="c10-setup-grid">
+          <div>
+            <label for="jobRoleSelect">Target Job Role</label>
+            <select id="jobRoleSelect" title="Choose target job role">
+              <option value="Software Developer" selected>Software Developer</option>
+              <option value="Backend Engineer">Backend Engineer</option>
+              <option value="Frontend Engineer">Frontend Engineer</option>
+              <option value="Full Stack Developer">Full Stack Developer</option>
+              <option value="DevOps / SRE Engineer">DevOps / SRE Engineer</option>
+              <option value="Data Engineer">Data Engineer</option>
+            </select>
+          </div>
+          <div>
+            <label for="categorySelect">Interview Category (Problem C10)</label>
+            <select id="categorySelect" title="Choose interview category">
+              <option value="Data Structures & Algorithms" selected>Data Structures & Algorithms</option>
+              <option value="Core CS - DBMS">Core CS: DBMS</option>
+              <option value="Core CS - Operating Systems">Core CS: Operating Systems</option>
+              <option value="Core CS - OOP">Core CS: Object-Oriented Programming</option>
+              <option value="Core CS - Computer Networks">Core CS: Computer Networks</option>
+              <option value="Software Development Projects">Software Development Projects</option>
+              <option value="All Questions">All / General Interview</option>
+            </select>
+          </div>
+          <div>
+            <label for="promptVersionSelect">Prompt Version (Academic Evaluation)</label>
+            <select id="promptVersionSelect" title="Choose prompt version for evaluation">
+              <option value="final" selected>Final (Context-Aware + Guardrails) [Recommended]</option>
+              <option value="v3">Version 3 (Refined Rubric & Scoring Anchors)</option>
+              <option value="v2">Version 2 (Rubric-Based Evaluator)</option>
+              <option value="v1">Version 1 (Basic Role Evaluator)</option>
+            </select>
+          </div>
+        </div>
+
+        <label for="questionSelect">Interview Question</label>
+        <select id="questionSelect" title="Choose interview question"></select>
+        <input id="customQuestion" class="hidden" placeholder="Enter custom question" />
+
+        <div class="rl-controls">
+          <label class="rl-toggle-row" for="useRlMode">
+            <input id="useRlMode" type="checkbox" />
+            <span>Enable RL Adaptive Coaching</span>
+          </label>
+          <label class="rl-toggle-row" for="adaptivePersonality">
+            <input id="adaptivePersonality" type="checkbox" />
+            <span>Adaptive Personality Mode</span>
+          </label>
+          <label for="coachPersonality">Coach Personality</label>
+          <select id="coachPersonality" title="Choose coach personality">
+            <option value="friendly" selected>Friendly mentor</option>
+            <option value="strict">Strict interviewer</option>
+            <option value="faang">Real FAANG interviewer</option>
+          </select>
+          <label class="rl-toggle-row" for="fixWeaknessMode">
+            <input id="fixWeaknessMode" type="checkbox" />
+            <span>Targeted Weakness Training Mode</span>
+          </label>
+          <p id="weaknessModeNote" class="section-subtitle">Mode: Random interview questions.</p>
+          <label for="rlDifficulty">RL Difficulty</label>
+          <select id="rlDifficulty" title="Choose RL difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+          <p id="rlStatus" class="section-subtitle">RL mode is off.</p>
+        </div>
+
+        <div id="rlSummary" class="rl-summary hidden">
+          <h3>RL Session Visibility</h3>
+          <div class="rl-summary-grid">
+            <div><small>Attempt</small><strong id="rlAttempt">-</strong></div>
+            <div><small>Total Reward</small><strong id="rlReward">-</strong></div>
+            <div><small>Average Grade</small><strong id="rlAvgGrade">-</strong></div>
+            <div><small>Latest Strategy</small><strong id="rlStrategy">-</strong></div>
+          </div>
+          <p id="rlSessionState" class="section-subtitle">No active RL session.</p>
+        </div>
+
+        <div id="practicePrompt" class="practice-prompt" aria-live="polite">
+          <small>Current question</small>
+          <strong id="practicePromptText"></strong>
+        </div>
+
+        <div id="textPractice" class="mode-pane hidden">
+          <textarea id="textAnswer" rows="8" placeholder="Type your interview response..."></textarea>
+          <button id="analyzeTextBtn" class="cta-main">🔍 Analyze Response</button>
+        </div>
+
+        <div id="audioPractice" class="mode-pane">
+          <p>Use browser speech recognition, then analyze your transcript.</p>
+          <div class="speech-controls">
+            <button id="startSpeechBtn">🎙️ Start Speech</button>
+            <button id="stopSpeechBtn" class="ghost">⏹️ Stop Speech</button>
+          </div>
+          <p id="audioSpeechTimer" class="speech-timer">Recording Time: 00:00</p>
+          <textarea id="audioTranscript" rows="6" placeholder="Transcription appears here..."></textarea>
+          <button id="analyzeAudioBtn" class="cta-main">🔍 Analyze Response</button>
+        </div>
+
+        <div id="videoPractice" class="mode-pane hidden">
+          <p>Start camera to receive posture feedback while answering.</p>
+          <div class="video-stage">
+            <video id="videoPreview" autoplay muted></video>
+            <div id="postureOverlay" class="posture-overlay posture-overlay-neutral">
+              <span id="postureOverlayStatus">Posture: Not analyzed</span>
+              <span id="postureOverlayFeedback">No posture analysis yet</span>
+            </div>
+          </div>
+          <div class="camera-controls">
+            <button id="startCameraBtn">📹 Start Camera</button>
+            <button id="stopCameraBtn" class="ghost">⏹️ Stop Camera</button>
+          </div>
+          <p id="postureStatus">Posture: Not analyzed</p>
+          <p id="postureFeedback">Feedback: No posture analysis yet</p>
+          <textarea id="videoTranscript" rows="6" placeholder="Use speech recognition then submit..."></textarea>
+          <div class="speech-controls">
+            <button id="startVideoSpeechBtn">🎙️ Start Speech</button>
+            <button id="stopVideoSpeechBtn" class="ghost">⏹️ Stop Speech</button>
+          </div>
+          <p id="videoSpeechTimer" class="speech-timer">Recording Time: 00:00</p>
+          <button id="submitVideoBtn" class="cta-main">✨ Submit Video Practice</button>
+        </div>
+
+        <div id="practiceThread" class="practice-thread hidden" aria-live="polite">
+          <div class="practice-thread-header">
+            <h3>Interview Flow</h3>
+            <button id="stopInterviewBtn" type="button" class="ghost">Stop Interview</button>
+          </div>
+          <div id="practiceThreadItems"></div>
+        </div>
+
+        <!-- Problem C10: Structured Evaluation & Multi-turn Feedback -->
+        <div id="c10FeedbackContainer" class="c10-feedback-panel hidden" aria-live="polite">
+          <div class="c10-header-card">
+            <div class="c10-score-badge-wrap">
+              <span class="c10-score-badge"><span id="c10TotalScore">9.0</span> / 10</span>
+              <span id="c10PerformanceTier" class="c10-tier-badge">Strong Answer</span>
+              <span id="c10PromptBadge" class="c10-ver-badge">Prompt Final</span>
+              <span id="c10StatusNotice" class="c10-status-badge hidden">Simulated</span>
+            </div>
+            <p id="c10AssessmentSummary" class="c10-summary-text"></p>
+          </div>
+
+          <div class="c10-rubric-grid">
+            <div class="c10-rubric-card">
+              <div class="c10-rubric-title">
+                <span>Technical Accuracy</span>
+                <strong id="c10TechScore">4 / 4</strong>
+              </div>
+              <p id="c10TechReason" class="c10-rubric-reason"></p>
+            </div>
+            <div class="c10-rubric-card">
+              <div class="c10-rubric-title">
+                <span>Completeness</span>
+                <strong id="c10CompScore">1 / 2</strong>
+              </div>
+              <p id="c10CompReason" class="c10-rubric-reason"></p>
+            </div>
+            <div class="c10-rubric-card">
+              <div class="c10-rubric-title">
+                <span>Relevance</span>
+                <strong id="c10RelScore">2 / 2</strong>
+              </div>
+              <p id="c10RelReason" class="c10-rubric-reason"></p>
+            </div>
+            <div class="c10-rubric-card">
+              <div class="c10-rubric-title">
+                <span>Communication & Clarity</span>
+                <strong id="c10CommScore">2 / 2</strong>
+              </div>
+              <p id="c10CommReason" class="c10-rubric-reason"></p>
+            </div>
+          </div>
+
+          <div class="c10-strengths-box">
+            <h4>✅ Strengths</h4>
+            <ul id="c10StrengthsList"></ul>
+          </div>
+
+          <div class="c10-improvements-box">
+            <h4>💡 Areas for Improvement</h4>
+            <ul id="c10ImprovementsList"></ul>
+          </div>
+
+          <div class="c10-model-answer-box">
+            <div class="c10-model-answer-header">
+              <h4>🎯 Improved Model Answer</h4>
+              <button id="copyModelAnswerBtn" type="button" class="ghost-small">📋 Copy Answer</button>
+            </div>
+            <p id="c10ModelAnswerText" class="c10-model-text"></p>
+          </div>
+
+          <div class="c10-followup-box">
+            <div class="c10-followup-header">
+              <h4>🔄 Adaptive Follow-up Question</h4>
+              <span class="c10-followup-tag">Multi-turn Interview Context</span>
+            </div>
+            <p id="c10FollowupText" class="c10-followup-text"></p>
+            <button id="acceptFollowupBtn" type="button" class="cta-secondary">🎙️ Answer This Follow-up Question</button>
+          </div>
+        </div>
+
+        <pre id="analysisResult" class="result"></pre>
+
+        <div id="agentBrain" class="agent-brain hidden" aria-live="polite">
+          <h3>Decision Visualization (Agent Brain)</h3>
+          <div class="mini-code" id="agentBrainText"></div>
+        </div>
+      </section>
+
+      <section id="progress" class="tab-panel card">
+        <h2>Progress Tracker</h2>
+        <p class="section-subtitle">Track confidence and tone trends across your recent sessions.</p>
+        <div class="progress-summary">
+          <div class="progress-stat">
+            <small>Total Sessions</small>
+            <strong id="progressSessions">0</strong>
+          </div>
+          <div class="progress-stat">
+            <small>Avg Confidence</small>
+            <strong id="progressAvgConfidence">0.0</strong>
+          </div>
+          <div class="progress-stat">
+            <small>Avg Tone</small>
+            <strong id="progressAvgTone">0.00</strong>
+          </div>
+          <div class="progress-stat">
+            <small>Best Confidence</small>
+            <strong id="progressBestConfidence">0.0</strong>
+          </div>
+        </div>
+        <p id="progressInsight" class="section-subtitle"></p>
+
+        <div class="coach-panels" aria-live="polite">
+          <div class="coach-panel gami-badges-panel">
+            <h3>Skill Badges 🏅</h3>
+            <div id="gamiBadgesContainer" class="badges-container">
+              <span class="gami-badge empty">No badges yet</span>
+            </div>
+            <p class="section-subtitle">Unlock badges by scoring highly.</p>
+          </div>
+
+          <div class="coach-panel readiness-card">
+            <div class="readiness-card-header">
+              <div class="readiness-title-group">
+                <span id="readinessStatusBadge" class="readiness-badge beginner">🌱 Practice Started</span>
+                <h3>Interview Readiness Score</h3>
+              </div>
+              <div class="readiness-score-box">
+                <span id="readinessScoreBig">0%</span>
+                <small>Readiness</small>
+              </div>
+            </div>
+
+            <div class="readiness-meter">
+              <div class="readiness-meter-bar">
+                <div id="readinessProgressBarFill" class="readiness-meter-fill" style="width: 0%;"></div>
+              </div>
+              <div class="readiness-meter-labels">
+                <span>Baseline: <strong id="readinessStartText">0%</strong></span>
+                <span>Current: <strong id="readinessEndText">0%</strong></span>
+              </div>
+            </div>
+
+            <div class="readiness-factors-grid">
+              <div class="readiness-factor">
+                <span class="factor-icon">📄</span>
+                <span class="factor-name">ATS Resume</span>
+                <strong id="readinessFactorResume">0%</strong>
+              </div>
+              <div class="readiness-factor">
+                <span class="factor-icon">🎙️</span>
+                <span class="factor-name">Answer Depth</span>
+                <strong id="readinessFactorAnswer">0%</strong>
+              </div>
+              <div class="readiness-factor">
+                <span class="factor-icon">💪</span>
+                <span class="factor-name">Confidence</span>
+                <strong id="readinessFactorConfidence">0%</strong>
+              </div>
+            </div>
+
+            <div class="mini-code hidden" id="readinessNumbers">Start: -<br />End: -</div>
+          </div>
+
+          <div class="coach-panel">
+            <h3>Skill-wise Breakdown</h3>
+            <div class="mini-code" id="skillBreakdown">DSA → -%<br />System Design → -%<br />Communication → -%</div>
+            <p class="section-subtitle" id="weakestSkillNote">Then improve weakest.</p>
+            <p class="section-subtitle">Judges see: personalization, clarity</p>
+          </div>
+
+          <div class="coach-panel">
+            <h3>Feedback Effectiveness Tracker</h3>
+            <div class="mini-code" id="effectivenessNumbers">Hint → - improvement<br />Example → -
+              improvement<br />Follow-up → - improvement</div>
+            <p class="section-subtitle">This proves: RL is real, agent is learning.</p>
+          </div>
+
+          <div class="coach-panel">
+            <h3>Live Improvement Scorecard</h3>
+            <div class="mini-code">Confidence ↑<br />Clarity ↑<br />Technical Depth ↑</div>
+            <div class="mini-code" id="scorecardNumbers">Before: - / - / -<br />After: - / - / -</div>
+            <p class="section-subtitle">Judges love visual progress.</p>
+          </div>
+        </div>
+
+        <div class="chart-wrap">
+          <canvas id="confidenceChart"></canvas>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="toneChart"></canvas>
+        </div>
+      </section>
+
+      <section id="ats" class="tab-panel ats-meteor-wrap">
+        <!-- Aceternity UI vibrant glow backdrop -->
+        <div class="ats-glow-backdrop" aria-hidden="true"></div>
+
+        <div class="card ats-meteor-card">
+          <!-- Meteor shower effect -->
+          <div class="meteors-container" aria-hidden="true" id="atsMeteorsContainer"></div>
+
+          <!-- Aceternity UI signature badge icon -->
+          <div class="ats-badge-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 4.5l15 15m0 0V8.25m0 11.25H8.25" />
+            </svg>
+          </div>
+
+          <h2>ATS Checker</h2>
+          <p class="section-subtitle">Upload your resume and get an ATS-friendly score with actionable checks.</p>
+
+          <div class="ats-upload">
+            <label for="atsResumeFile">Upload Resume (PDF, DOCX, or TXT)</label>
+            <input id="atsResumeFile" type="file" accept=".pdf,.docx,.txt" />
+            <button id="atsCheckBtn" class="cta-main" type="button">📄 Check Resume</button>
+            <p id="atsMessage" class="message"></p>
+          </div>
+
+          <div id="atsResults" class="ats-results hidden" aria-live="polite">
+            <div class="ats-scorecard">
+              <h3>Your Score</h3>
+              <div class="ats-score">
+                <strong id="atsScore">-</strong><span>/100</span>
+              </div>
+              <p class="ats-issues"><span id="atsIssues">-</span> Issues</p>
+            </div>
+
+            <div id="atsGroups" class="ats-groups"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="reports" class="tab-panel card">
+        <h2>Reports</h2>
+        <p class="section-subtitle">Filter sessions and export your performance report as PDF.</p>
+        <div class="date-row">
+          <div class="field">
+            <label for="startDate">Start Date</label>
+            <input id="startDate" type="date" title="Report start date" />
+          </div>
+          <div class="field">
+            <label for="endDate">End Date</label>
+            <input id="endDate" type="date" title="Report end date" />
+          </div>
+        </div>
+        <button id="downloadPdfBtn" class="cta-main">📥 Download PDF Report</button>
+        <div id="reportsList"></div>
+      </section>
+
+      <section id="account" class="tab-panel card">
+        <h2>Account</h2>
+        <p class="section-subtitle">Manage your profile and view account activity summary.</p>
+        <p id="accountUsername">Username:</p>
+        <p id="accountSessions">Total Sessions: 0</p>
+
+        <div class="grid-2">
+          <div class="field">
+            <label for="accountFullName">Full name</label>
+            <input id="accountFullName" placeholder="Full name" />
+          </div>
+          <div class="field">
+            <label for="accountEmail">Email address</label>
+            <input id="accountEmail" placeholder="Email address" />
+          </div>
+          <div class="field">
+            <label for="accountPhone">Phone number</label>
+            <input id="accountPhone" placeholder="Phone number" />
+          </div>
+          <div class="field">
+            <label for="accountUniversity">University / College</label>
+            <input id="accountUniversity" placeholder="University / College" />
+          </div>
+          <div class="field">
+            <label for="accountCollegeYear">Current year of college</label>
+            <input id="accountCollegeYear" placeholder="Current year of college (e.g., 2)" />
+          </div>
+          <div class="field">
+            <label for="accountDegree">Degree</label>
+            <input id="accountDegree" placeholder="Degree (e.g., B.Tech, BSc)" />
+          </div>
+          <div class="field">
+            <label for="accountMajor">Branch / Major</label>
+            <input id="accountMajor" placeholder="Branch / Major" />
+          </div>
+          <div class="field">
+            <label for="accountLinkedIn">LinkedIn / Portfolio URL</label>
+            <input id="accountLinkedIn" placeholder="LinkedIn / Portfolio URL (optional)" />
+          </div>
+          <div class="field field-full">
+            <label for="accountAbout">About you</label>
+            <textarea id="accountAbout" rows="3" placeholder="About you (goals, interests, etc.)"></textarea>
+          </div>
+        </div>
+
+        <button id="saveAccountBtn" type="button" class="cta-main">💾 Save Changes</button>
+        <button id="logoutBtn" class="hidden cta-main">🚪 Log Out</button>
+      </section>
+    </section>
+  </main>
+
+  <div id="loadingOverlay" class="loading-overlay hidden" aria-live="polite">
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <p id="loadingText">Processing...</p>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container" aria-live="assertive" aria-atomic="true"></div>
+
+  <script id="firebaseBootstrap"
+    type="application/json">{{ {"enabled": (firebase_enabled or false), "web_config": firebase_web_config} | tojson }}</script>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
+
+  <script src="/static/app.js?v=11"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/static/sw.js').catch(() => { });
+      });
+    }
+  </script>
+</body>
+
+</html>

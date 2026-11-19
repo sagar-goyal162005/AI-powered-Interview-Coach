@@ -1,0 +1,292 @@
+# OpenEnv Specification for Interview Coach RL Environment
+# This file documents the environment interface following OpenEnv standards
+
+name: interview-coach
+version: 1.0.0
+description: "Reinforcement learning environment for interview coaching"
+
+# Environment metadata
+metadata:
+  authors: ["AI Interview Coach"]
+  license: "MIT"
+  task_category: "dialogue,education,reinforcement-learning"
+  keywords: ["interview", "coaching", "questions-answering", "reinforcement-learning"]
+
+# State/Observation specification
+observation:
+  description: "Current state of an interview coaching session"
+  type: object
+  fields:
+    task_id:
+      type: string
+      description: "Unique identifier for the task"
+      example: "easy_001"
+    
+    difficulty:
+      type: enum
+      values: ["easy", "medium", "hard"]
+      description: "Task difficulty level"
+    
+    question:
+      type: string
+      description: "The interview question"
+      example: "Tell me about yourself"
+    
+    user_answer:
+      type: string
+      description: "User's current answer attempt"
+    
+    answer_length:
+      type: integer
+      description: "Number of words in answer"
+      range: [0, 1000]
+    
+    keywords_found:
+      type: integer
+      description: "Number of key concepts found in answer"
+    
+    keyword_recall:
+      type: float
+      description: "Fraction of required keywords present"
+      range: [0.0, 1.0]
+    
+    sentiment_score:
+      type: float
+      description: "Sentiment polarity (-1=negative, +1=positive)"
+      range: [-1.0, 1.0]
+    
+    structure_score:
+      type: float
+      description: "Answer structure quality score"
+      range: [0.0, 1.0]
+    
+    current_grade:
+      type: float
+      description: "Current answer quality grade (0.0-1.0)"
+      range: [0.0, 1.0]
+    
+    attempt_number:
+      type: integer
+      description: "Which attempt (1-indexed)"
+      range: [0, 10]
+    
+    max_attempts:
+      type: integer
+      description: "Maximum attempts allowed"
+      default: 5
+    
+    previous_feedback:
+      type: array
+      items:
+        type: enum
+        values: ["strict", "moderate", "hint"]
+      description: "Feedback strategies used in previous attempts"
+    
+    improvement_history:
+      type: array
+      items:
+        type: float
+      description: "Grade from each previous attempt"
+
+# Action specification
+action:
+  description: "Agent's feedback strategy selection"
+  type: object
+  fields:
+    strategy:
+      type: enum
+      values: ["strict", "moderate", "hint"]
+      description: "Chosen feedback approach"
+      definitions:
+        strict: "Detailed critical feedback pointing out all issues"
+        moderate: "Balanced feedback with strengths and improvements"
+        hint: "Subtle guidance for self-discovery"
+    
+    confidence:
+      type: float
+      description: "Agent's confidence in this choice"
+      range: [0.0, 1.0]
+
+    response_text:
+      type: string
+      description: "User answer attempt carried inside action for step(action) compatibility"
+      nullable: true
+
+# Reward specification
+reward:
+  description: "Reward signal for learning"
+  type: object
+  fields:
+    improvement_reward:
+      type: float
+      description: "Reward for answer quality improvement"
+      range: [-10.0, 10.0]
+    
+    efficiency_reward:
+      type: float
+      description: "Penalty for excessive attempts"
+      range: [-2.0, 2.0]
+    
+    max_attempts_penalty:
+      type: float
+      description: "Penalty for reaching max attempts"
+      range: [-5.0, 0.0]
+    
+    total:
+      type: float
+      description: "Normalized total reward signal"
+      range: [0.0, 1.0]
+    
+    done:
+      type: boolean
+      description: "Is episode terminal?"
+    
+    success:
+      type: boolean
+      description: "Did user reach target grade?"
+    
+    reason:
+      type: string
+      description: "Why episode ended"
+
+# Episode structure
+episode:
+  description: "Structure of a training episode"
+  max_steps: 5
+  termination_conditions:
+    - "Current grade >= target_grade (0.8 by default)"
+    - "Max attempts reached"
+  
+  step_format:
+    input: observation
+    action: action
+    output: "observation, reward, done, info"
+
+# Example usage
+example_usage: |
+  from rl_interview_coach import InterviewCoachEnv, QLearningAgent
+  
+  # Create environment
+  env = InterviewCoachEnv(max_attempts=5, target_grade=0.80)
+  
+  # Create agent
+  agent = QLearningAgent(learning_rate=0.1, discount_factor=0.95)
+  
+  # Reset for new episode
+  obs = env.reset()
+  
+  # Training loop
+  for step in range(5):
+      # Agent decides action strategy and carries answer text in action payload
+      action = Action(strategy=agent.choose_action(obs), confidence=0.9, response_text="...")
+      
+      # Environment step (OpenEnv style)
+      step_result = env.step(action)
+      
+      # Update agent Q-values
+      agent.update(
+          obs,
+          action_strategy=action.strategy,
+          reward=step_result.reward.total,
+          next_obs=step_result.observation,
+          done=step_result.done
+      )
+      
+      if step_result.done:
+          break
+
+# Interface methods
+interface:
+  reset():
+    description: "Initialize new episode"
+    returns: "Observation"
+    
+  step(action):
+    description: "Execute one environment step"
+    parameters:
+      - name: action
+        type: Action
+        description: "Feedback strategy + optional response_text"
+    returns: "StepReturn(observation, reward, done, info)"
+    
+  state():
+    description: "Get current observation"
+    returns: "Observation"
+
+# Task definitions
+tasks:
+  easy:
+    count: 3
+    characteristics:
+      - "Short answers (30-50 words)"
+      - "Simple grading rules"
+      - "Focus on basics"
+    examples:
+      - "Tell me about yourself"
+      - "What is your greatest strength?"
+      - "What is your greatest weakness?"
+    target_grade: 0.75
+  
+  medium:
+    count: 3
+    characteristics:
+      - "Medium answers (80-150 words)"
+      - "STAR format for behavioral"
+      - "Technical depth required"
+    examples:
+      - "Describe a technical challenge you solved"
+      - "Tell me about team collaboration"
+      - "Why do you want to work here?"
+    target_grade: 0.80
+  
+  hard:
+    count: 3
+    characteristics:
+      - "Long answers (100+ words)"
+      - "Complex evaluation"
+      - "Growth mindset needed"
+    examples:
+      - "Tell me about conflict handling"
+      - "Describe your biggest failure"
+      - "Where do you see yourself in 5 years?"
+    target_grade: 0.82
+
+# Grading rules
+grading:
+  description: "How answers are scored (0.0 to 1.0)"
+  
+  general_questions:
+    keyword_presence: "30%"
+    answer_length: "20%"
+    sentiment: "15%"
+    coherence: "20%"
+    structure: "15%"
+  
+  behavioral_questions:
+    star_structure: "50%"
+    quantifiable_metrics: "20%"
+    answer_length: "15%"
+    professionalism: "15%"
+  
+  technical_questions:
+    technical_depth: "30%"
+    clarity: "30%"
+    answer_length: "20%"
+    code_examples: "20%"
+
+# Q-Learning agent configuration
+learning:
+  algorithm: "Q-Learning with epsilon-greedy exploration"
+  learning_rate: 0.1
+  discount_factor: 0.95
+  initial_epsilon: 1.0
+  final_epsilon: 0.05
+  epsilon_decay: 0.995
+  
+  state_representation:
+    - "Difficulty (3 values): easy, medium, hard"
+    - "Attempt number (6 values): 0-5"
+    - "Grade level (5 values): 0, 0.2, 0.4, 0.6, 0.8+"
+    - "Keyword recall (3 values): low, medium, high"
+  
+  q_table_size: "estimated 270 states (3 * 6 * 5 * 3)"

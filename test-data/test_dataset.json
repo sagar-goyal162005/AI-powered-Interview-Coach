@@ -1,0 +1,92 @@
+[
+  {
+    "test_id": "TC01",
+    "category": "Data Structures & Algorithms",
+    "job_role": "Software Developer",
+    "question": "What is the difference between an Array and a Linked List?",
+    "student_answer": "An array stores elements in contiguous memory locations with O(1) random access by index, but has a fixed size. A linked list stores elements in separate nodes connected by pointers anywhere in memory, allowing dynamic size and O(1) insertions/deletions at known positions, but requires O(n) sequential access traversal.",
+    "type": "Standard Technical Comparison",
+    "expected_concepts": "Contiguous vs node-based memory, random access O(1) vs sequential traversal O(n), insertion/deletion dynamics, cache locality."
+  },
+  {
+    "test_id": "TC02",
+    "category": "Data Structures & Algorithms",
+    "job_role": "Software Developer",
+    "question": "Explain binary search and its time complexity.",
+    "student_answer": "Binary search is an efficient search algorithm on sorted arrays. It works by repeatedly dividing the search interval in half: compare the target value to the middle element; if equal, return index; if target is smaller, search left half; otherwise search right half. Best case time complexity is O(1) if target is at the middle. Average and worst-case time complexity is O(log n) because the search space halves each step. Space complexity is O(1) iteratively or O(log n) recursive call stack.",
+    "type": "Algorithm & Complexity Analysis",
+    "expected_concepts": "Pre-condition (sorted collection), divide-and-conquer principle, middle element comparison, O(log n) recurrence derivation, iterative O(1) vs recursive O(log n) space."
+  },
+  {
+    "test_id": "TC03",
+    "category": "Data Structures & Algorithms",
+    "job_role": "Software Developer",
+    "question": "How would you detect a cycle in a singly linked list?",
+    "student_answer": "We can detect a cycle using Floyd's Cycle-Finding Algorithm, also known as the Tortoise and Hare approach. We initialize two pointers: slow moving one step at a time, and fast moving two steps at a time. If there is a cycle, fast will eventually meet slow inside the loop. If fast reaches NULL, there is no cycle. Time complexity is O(n) and auxiliary space complexity is O(1), which is better than using a hash set with O(n) space.",
+    "type": "Pointer Technique & Space Optimization",
+    "expected_concepts": "Floyd's slow and fast pointers, mathematical intuition of meeting inside loop, termination condition (NULL), O(n) time, O(1) space vs hash set."
+  },
+  {
+    "test_id": "TC04",
+    "category": "Core CS - DBMS",
+    "job_role": "Backend Engineer",
+    "question": "Explain database normalization and its purpose.",
+    "student_answer": "Normalization is the process of organizing data in a relational database to minimize data redundancy and prevent insertion, update, and deletion anomalies. It involves decomposing large tables into smaller, well-structured tables linked by foreign keys. Key normal forms are 1NF (atomic values, no repeating groups), 2NF (in 1NF and no partial dependencies on candidate keys), 3NF (in 2NF and no transitive dependencies), and BCNF (every determinant is a candidate key).",
+    "type": "Database Design & Redundancy Reduction",
+    "expected_concepts": "Minimizing redundancy, eliminating update/insert/delete anomalies, functional dependencies, 1NF atomic attributes, 2NF full dependency, 3NF non-transitive dependency, BCNF candidate key rule."
+  },
+  {
+    "test_id": "TC05",
+    "category": "Core CS - OOP",
+    "job_role": "Software Developer",
+    "question": "Explain polymorphism with a software engineering example.",
+    "student_answer": "Polymorphism means 'many forms' and allows objects of different classes to be treated as objects of a common superclass. There are two types: compile-time (static) polymorphism achieved through method overloading, and runtime (dynamic) polymorphism achieved through method overriding. For example, a base class 'PaymentMethod' has a method 'processPayment()'. Derived classes 'CreditCardPayment' and 'UPIPayment' override 'processPayment()'. At runtime, the caller can execute 'payment.processPayment()' without knowing the concrete class.",
+    "type": "Object-Oriented Design Principles",
+    "expected_concepts": "Static polymorphism (overloading) vs dynamic polymorphism (overriding), virtual method dispatch / vtable, interface/superclass abstraction, decoupling client code."
+  },
+  {
+    "test_id": "TC06",
+    "category": "Core CS - Operating Systems",
+    "job_role": "Systems Engineer",
+    "question": "What is the difference between a Process and a Thread, and how does context switching differ?",
+    "student_answer": "A process is an executing instance of a program with its own independent virtual address space, memory, file descriptors, and Process Control Block (PCB). A thread is the smallest unit of execution within a process; multiple threads of the same process share the same code, data, and heap memory, but have their own registers and call stack (Thread Control Block). Context switching between processes is slower because the OS must flush TLB caches and swap page tables. Thread context switching is faster because virtual memory mapping remains unchanged.",
+    "type": "OS Concurrency & Memory Isolation",
+    "expected_concepts": "Independent address space vs shared memory, PCB vs TCB, context switch cost (TLB flush, cache invalidation, page tables), inter-thread communication vs IPC."
+  },
+  {
+    "test_id": "TC07",
+    "category": "Core CS - Computer Networks",
+    "job_role": "Full Stack Developer",
+    "question": "Explain why TCP is preferred over UDP for file transfer applications like FTP.",
+    "student_answer": "TCP is preferred for file transfer because it is a connection-oriented, reliable transport layer protocol. It guarantees ordered delivery, performs 3-way handshakes, computes checksums, retransmits lost packets via ARQ, and performs flow and congestion control (sliding window). In file transfer, even a single corrupt or missing byte corrupts the entire executable or file. In contrast, UDP is connectionless and does not guarantee packet arrival, ordering, or retransmission, making it suitable for streaming or gaming but disastrous for reliable file downloads.",
+    "type": "Transport Layer Protocols & Reliability",
+    "expected_concepts": "Reliability guarantee, TCP 3-way handshake, retransmission (ACK/NAK), sequencing / ordered delivery, sliding window flow control vs UDP connectionless unverified datagrams."
+  },
+  {
+    "test_id": "TC08",
+    "category": "Software Development Projects",
+    "job_role": "Full Stack Developer",
+    "question": "Explain the architecture of a student management system.",
+    "student_answer": "The student management system follows a 3-tier microservices-ready architecture. The presentation tier is built with React.js communicating via REST APIs. The application tier consists of a Python Flask backend containing controllers, business service layers, and JWT authentication middleware with role-based access control (Admin, Professor, Student). The data tier uses PostgreSQL with indexed tables for students, courses, grades, and attendance, managed via SQLAlchemy ORM. Redis is used for session caching and caching frequently accessed timetable data.",
+    "type": "System Architecture & End-to-End Design",
+    "expected_concepts": "3-tier separation (Frontend, Backend API, Database), authentication & RBAC, ORM/relational schema, caching layer (Redis), error handling, scalability."
+  },
+  {
+    "test_id": "TC09",
+    "category": "Data Structures & Algorithms",
+    "job_role": "Software Developer",
+    "question": "What is the time and space complexity of QuickSort in the best, average, and worst cases?",
+    "student_answer": "QuickSort runs in O(n log n) time in the best and average cases. Worst case time is O(n^2) when the pivot chosen is bad, like always picking the first element in an already sorted list. For space complexity, QuickSort is in-place so its auxiliary space is always O(1).",
+    "type": "Weak / Partially Correct Answer",
+    "expected_concepts": "Evaluator must recognize the partial error: space complexity is NOT O(1); recursive call stack requires O(log n) space on average and O(n) space in the worst case."
+  },
+  {
+    "test_id": "TC10",
+    "category": "Core CS - DBMS",
+    "job_role": "Software Developer",
+    "question": "What are ACID properties in database management systems and why are they important?",
+    "student_answer": "",
+    "type": "Edge Case (Empty Answer)",
+    "expected_concepts": "Evaluator must handle empty input robustly: award 0 marks for technical accuracy and completeness, provide guidance, and not crash or hallucinate false strengths."
+  }
+]
