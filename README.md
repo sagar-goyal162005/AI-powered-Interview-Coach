@@ -18,7 +18,17 @@ tags:
 ### Problem C10: Mock Interview Question and Feedback Tool
 **Bennett University — B.Tech CSE (SCSE4041 Prompt Engineering Mini Project)**
 
-An applied AI platform designed for college students preparing for technical placement interviews. Combining **multi-stage prompt engineering**, **rubric-based evaluation**, **adaptive multi-turn follow-up questioning**, **speech analysis**, **video posture detection**, and **ATS resume scanning**.
+[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Live%20Space-blue)](https://huggingface.co/spaces/Shauriya24/AI-Powered-Interview-Coach)
+[![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-black?logo=github)](https://github.com/sagar-goyal162005/AI-powered-Interview-Coach)
+
+> 🌐 **Live Hugging Face Space:** [https://huggingface.co/spaces/Shauriya24/AI-Powered-Interview-Coach](https://huggingface.co/spaces/Shauriya24/AI-Powered-Interview-Coach)
+
+---
+
+## 📖 About
+**AI-Powered Software Engineering Mock Interview Coach** is an applied artificial intelligence system designed for computer science students preparing for technical software engineering placement interviews. Developed under **SCSE4041 Prompt Engineering** at Bennett University for **Problem C10: Mock Interview Question and Feedback Tool**, the system delivers instant, rubric-grounded assessment and adaptive follow-up questioning across DSA, Core Computer Science (DBMS, OS, OOP, CN), and Software Projects.
+
+Combining **multi-stage prompt engineering**, **rubric-based evaluation**, **adaptive multi-turn follow-up questioning**, **speech analysis**, **video posture detection**, and **ATS resume scanning**, the platform provides an end-to-end placement preparation suite available both as a **[Live Hugging Face Space](https://huggingface.co/spaces/Shauriya24/AI-Powered-Interview-Coach)** and as a locally deployable Flask application.
 
 ---
 
@@ -167,8 +177,8 @@ AI-Interview-Coach/
 
 ### 2. Clone the Repository
 ```bash
-git clone https://github.com/sagar-goyal162005/AI-Powered-Interview-Coach-1-.git
-cd AI-Powered-Interview-Coach-1-
+git clone https://github.com/sagar-goyal162005/AI-powered-Interview-Coach.git
+cd AI-powered-Interview-Coach
 ```
 
 ### 3. Virtual Environment Setup
