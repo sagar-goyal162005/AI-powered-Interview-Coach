@@ -134,8 +134,8 @@ AI-Interview-Coach/
 │   └── experiment_log.md              # Experimental benchmark logs and comparisons
 │
 ├── docs/                              # Academic documentation
-│   ├── Prompt_Engineering_Experiment_Documentation.docx
-│   └── AI_Software_Interview_Coach_Final_Report.docx
+│   ├── CodeSync_TechnicalReport.pdf
+│   └── M2_PE-B25-08_Mock Interview Question and Feedback Tool.pdf
 │
 ├── presentation/                      # Final viva presentation
 │   └── AI_Software_Interview_Coach_Final_Presentation.pptx
@@ -246,8 +246,8 @@ python test_integration.py
 
 ## 📄 Documentation Deliverables
 The complete academic documentation for Bennett University submission is located in `docs/` and `presentation/`:
-- `docs/Prompt_Engineering_Experiment_Documentation.docx`: Full prompt engineering experiment report with complete prompt texts, actual ChatGPT responses, and comparative tables.
-- `docs/AI_Software_Interview_Coach_Final_Report.docx`: Comprehensive final project report adhering to the prescribed 12-chapter university structure.
+- `docs/CodeSync_TechnicalReport.pdf`: Comprehensive final technical project report adhering to the prescribed university structure.
+- `docs/M2_PE-B25-08_Mock Interview Question and Feedback Tool.pdf`: Milestone 2 Prompt Engineering experiment documentation, rubric benchmarks, and comparative evaluation tables.
 - `presentation/AI_Software_Interview_Coach_Final_Presentation.pptx`: 12–15 slide presentation deck for project viva and faculty evaluation.
 
 ---

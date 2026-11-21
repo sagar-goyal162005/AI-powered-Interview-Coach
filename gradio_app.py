@@ -504,7 +504,7 @@ with gr.Blocks(theme=theme, title="AI-Powered Software Engineering Mock Intervie
 4. **Rohit Mukhopadhyay (S24CSEU0375)** — *Testing, Validation & Documentation Lead*
    - Standardized 10-test-case empirical matrix execution across 4 prompt versions (40 live runs).
    - Input sensitivity validation across 5 controlled answer qualities.
-   - Final report (`AI_Software_Interview_Coach_Final_Report.docx`), presentation (`AI_Software_Interview_Coach_Final_Presentation.pptx`), and documentation.
+   - Final technical report (`CodeSync_TechnicalReport.pdf`), Milestone 2 experiment documentation (`M2_PE-B25-08_Mock Interview Question and Feedback Tool.pdf`), presentation (`AI_Software_Interview_Coach_Final_Presentation.pptx`), and verification.
 
 ---
 
